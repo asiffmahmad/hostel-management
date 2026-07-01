@@ -1,0 +1,368 @@
+-- Initial Database Schema for Hostel Management System
+
+-- 1. HOSTEL_USERS
+CREATE TABLE hostel_users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 2. HOSTEL_ROLE
+CREATE TABLE hostel_role (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 3. HOSTEL_PERMISSION
+CREATE TABLE hostel_permission (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 4. HOSTEL_USER_ROLE
+CREATE TABLE hostel_user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES hostel_role(id) ON DELETE CASCADE
+);
+
+-- 5. HOSTEL_ROLE_PERMISSION
+CREATE TABLE hostel_role_permission (
+    role_id BIGINT NOT NULL,
+    permission_id BIGINT NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    CONSTRAINT fk_rp_role FOREIGN KEY (role_id) REFERENCES hostel_role(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rp_perm FOREIGN KEY (permission_id) REFERENCES hostel_permission(id) ON DELETE CASCADE
+);
+
+-- 6. HOSTEL_HOSTELS
+CREATE TABLE hostel_hostels (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    total_beds INT NOT NULL DEFAULT 0,
+    occupied_beds INT NOT NULL DEFAULT 0,
+    vacant_beds INT NOT NULL DEFAULT 0,
+    current_collection DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    pending_collection DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 7. HOSTEL_ROOMS
+CREATE TABLE hostel_rooms (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    hostel_id BIGINT NOT NULL,
+    room_number VARCHAR(50) NOT NULL,
+    capacity INT NOT NULL,
+    type VARCHAR(50),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_room_hostel FOREIGN KEY (hostel_id) REFERENCES hostel_hostels(id) ON DELETE CASCADE,
+    CONSTRAINT uq_room_hostel UNIQUE (hostel_id, room_number)
+);
+
+-- 8. HOSTEL_BEDS
+CREATE TABLE hostel_beds (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id BIGINT NOT NULL,
+    bed_number VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'VACANT',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_bed_room FOREIGN KEY (room_id) REFERENCES hostel_rooms(id) ON DELETE CASCADE,
+    CONSTRAINT uq_bed_room UNIQUE (room_id, bed_number)
+);
+
+-- 9. HOSTEL_STUDENTS
+CREATE TABLE hostel_students (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    photo VARCHAR(255),
+    phone VARCHAR(20),
+    parent_phone VARCHAR(20),
+    email VARCHAR(100),
+    address TEXT,
+    joining_date DATE,
+    bed_id BIGINT,
+    monthly_rent DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    advance_deposit DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_student_bed FOREIGN KEY (bed_id) REFERENCES hostel_beds(id) ON DELETE SET NULL
+);
+
+-- 10. HOSTEL_PAYMENTS
+CREATE TABLE hostel_payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    month VARCHAR(20) NOT NULL,
+    year VARCHAR(10) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    due_date DATE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_payment_student FOREIGN KEY (student_id) REFERENCES hostel_students(id) ON DELETE CASCADE
+);
+
+-- 11. HOSTEL_PAYMENT_HISTORY
+CREATE TABLE hostel_payment_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id BIGINT NOT NULL,
+    amount_paid DECIMAL(15,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    payment_method VARCHAR(50),
+    reference_number VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_history_payment FOREIGN KEY (payment_id) REFERENCES hostel_payments(id) ON DELETE CASCADE
+);
+
+-- 12. HOSTEL_PAYMENT_RECEIPTS
+CREATE TABLE hostel_payment_receipts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_history_id BIGINT NOT NULL,
+    receipt_number VARCHAR(100) NOT NULL UNIQUE,
+    file_url VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_receipt_history FOREIGN KEY (payment_history_id) REFERENCES hostel_payment_history(id) ON DELETE CASCADE
+);
+
+-- 13. HOSTEL_AUDIT_LOG
+CREATE TABLE hostel_audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    entity_name VARCHAR(100) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    old_values TEXT,
+    new_values TEXT,
+    username VARCHAR(100),
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. HOSTEL_COMMENTS
+CREATE TABLE hostel_comments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    entity_type VARCHAR(100) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    comment TEXT NOT NULL,
+    user_id BIGINT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_comment_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE CASCADE
+);
+
+-- 15. HOSTEL_ACTIVITY_LOG
+CREATE TABLE hostel_activity_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    activity VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE SET NULL
+);
+
+-- 16. HOSTEL_NOTIFICATIONS
+CREATE TABLE hostel_notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE CASCADE
+);
+
+-- 17. HOSTEL_LOGIN_HISTORY
+CREATE TABLE hostel_login_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    ip_address VARCHAR(50),
+    user_agent VARCHAR(255),
+    login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    logout_time TIMESTAMP,
+    CONSTRAINT fk_login_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE CASCADE
+);
+
+-- 18. HOSTEL_SETTINGS
+CREATE TABLE hostel_settings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    setting_value VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 19. HOSTEL_REFRESH_TOKEN
+CREATE TABLE hostel_refresh_token (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expiry_date TIMESTAMP NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_refresh_user FOREIGN KEY (user_id) REFERENCES hostel_users(id) ON DELETE CASCADE
+);
+
+-- 20. HOSTEL_EXPENSE_CATEGORY
+CREATE TABLE hostel_expense_category (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- 21. HOSTEL_EXPENSES
+CREATE TABLE hostel_expenses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    hostel_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    expense_date DATE NOT NULL,
+    description TEXT,
+    receipt_url VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_expense_hostel FOREIGN KEY (hostel_id) REFERENCES hostel_hostels(id) ON DELETE CASCADE,
+    CONSTRAINT fk_expense_category FOREIGN KEY (category_id) REFERENCES hostel_expense_category(id) ON DELETE CASCADE
+);
+
+-- 22. HOSTEL_REPORTS
+CREATE TABLE hostel_reports (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    report_type VARCHAR(100) NOT NULL,
+    file_url VARCHAR(255) NOT NULL,
+    generated_by BIGINT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_report_user FOREIGN KEY (generated_by) REFERENCES hostel_users(id) ON DELETE SET NULL
+);
+
+-- 23. HOSTEL_BED_TRANSFER
+CREATE TABLE hostel_bed_transfer (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    from_bed_id BIGINT NOT NULL,
+    to_bed_id BIGINT NOT NULL,
+    transfer_date DATE NOT NULL,
+    reason TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    CONSTRAINT fk_transfer_student FOREIGN KEY (student_id) REFERENCES hostel_students(id) ON DELETE CASCADE,
+    CONSTRAINT fk_transfer_from_bed FOREIGN KEY (from_bed_id) REFERENCES hostel_beds(id) ON DELETE CASCADE,
+    CONSTRAINT fk_transfer_to_bed FOREIGN KEY (to_bed_id) REFERENCES hostel_beds(id) ON DELETE CASCADE
+);
+
+-- 24. HOSTEL_STUDENT_HISTORY
+CREATE TABLE hostel_student_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    field_changed VARCHAR(100) NOT NULL,
+    old_value VARCHAR(255),
+    new_value VARCHAR(255),
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    changed_by VARCHAR(100),
+    CONSTRAINT fk_history_student FOREIGN KEY (student_id) REFERENCES hostel_students(id) ON DELETE CASCADE
+);
+
+-- 25. HOSTEL_SYSTEM_LOG
+CREATE TABLE hostel_system_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    level VARCHAR(50) NOT NULL,
+    logger VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    exception TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert Default Owner User
+INSERT INTO hostel_users (username, password, name) VALUES ('admin', '$2a$10$7Q9.C5tqB1f6B4.r.D.q5.9B9v8Y9C5tqB1f6B4.r.D.q5.9B9v8Y', 'Super Admin');

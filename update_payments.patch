@@ -1,0 +1,100 @@
+--- frontend/src/features/payments/Payments.tsx
++++ frontend/src/features/payments/Payments.tsx
+@@ -2,12 +2,13 @@
+ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+-import { Search, Plus, Filter, Download, MoreVertical, CheckCircle2, XCircle, Clock } from 'lucide-react';
++import { Search, Plus, Filter, Download, MoreVertical, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import {
+   Table,
+   TableBody,
+   TableCell,
+   TableHead,
+   TableHeader,
+   TableRow,
+ } from '@/components/ui/table';
+ import {
+@@ -21,11 +22,13 @@
+ 
+ const Payments = () => {
+   const [searchTerm, setSearchTerm] = useState('');
++  const [selectedMonth, setSelectedMonth] = useState('');
+   const [isModalOpen, setIsModalOpen] = useState(false);
+   const [selectedPayment, setSelectedPayment] = useState<Payment | undefined>(undefined);
+   const queryClient = useQueryClient();
++  const { toast } = useToast();
+ 
+   const { data: payments, isLoading } = useQuery<Payment[]>({
+     queryKey: ['payments'],
+     queryFn: async () => {
+@@ -34,10 +37,23 @@
+     },
+   });
+ 
+-  const filteredPayments = payments?.filter((p) => 
+-    p.studentId.toString().includes(searchTerm.toLowerCase()) ||
+-    p.id.toString().includes(searchTerm.toLowerCase())
+-  );
++  const generateMutation = useMutation({
++    mutationFn: async () => {
++      return await api.post('/payments/generate-monthly');
++    },
++    onSuccess: () => {
++      queryClient.invalidateQueries({ queryKey: ['payments'] });
++      toast({ title: 'Monthly invoices generated successfully' });
++    },
++  });
++
++  const filteredPayments = payments?.filter((p) => {
++    const matchesSearch = p.studentId.toString().includes(searchTerm.toLowerCase()) ||
++                          p.id.toString().includes(searchTerm.toLowerCase());
++    const matchesMonth = selectedMonth ? p.month === selectedMonth : true;
++    return matchesSearch && matchesMonth;
++  });
+ 
+   return (
+     <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+@@ -52,6 +68,10 @@
+             <Download size={16} />
+             Export CSV
+           </Button>
++          <Button variant="outline" className="gap-2 text-primary" onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
++            <FileText size={16} />
++            {generateMutation.isPending ? 'Generating...' : 'Generate Invoices'}
++          </Button>
+           <Button className="gap-2" onClick={() => { setSelectedPayment(undefined); setIsModalOpen(true); }}>
+             <Plus size={16} />
+             Record Payment
+@@ -62,7 +82,27 @@
+       <div className="flex items-center gap-4 shrink-0">
+         <div className="relative flex-1 max-w-sm">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+           <Input
+             placeholder="Search by student ID or payment ID..."
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+             className="pl-9"
+           />
+         </div>
++        <select 
++          className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
++          value={selectedMonth}
++          onChange={(e) => setSelectedMonth(e.target.value)}
++        >
++          <option value="">All Months</option>
++          <option value="JANUARY">January</option>
++          <option value="FEBRUARY">February</option>
++          <option value="MARCH">March</option>
++          <option value="APRIL">April</option>
++          <option value="MAY">May</option>
++          <option value="JUNE">June</option>
++          <option value="JULY">July</option>
++          <option value="AUGUST">August</option>
++          <option value="SEPTEMBER">September</option>
++          <option value="OCTOBER">October</option>
++          <option value="NOVEMBER">November</option>
++          <option value="DECEMBER">December</option>
++        </select>
+         <Button variant="outline" size="icon" className="shrink-0">
+           <Filter size={16} />
