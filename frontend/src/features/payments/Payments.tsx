@@ -197,14 +197,6 @@ const Payments = () => {
                         <Button variant="ghost" size="sm" className="gap-1 h-8 text-muted-foreground hover:text-primary" onClick={() => { setSelectedPayment(payment); setIsModalOpen(true); }}>
                           <Edit size={14} /> Edit
                         </Button>
-                        <Button variant="ghost" size="sm" className="gap-1 h-8 text-destructive hover:text-destructive" onClick={async () => {
-                          if (window.confirm('Delete payment?')) {
-                            await api.delete(`/payments/${payment.id}`);
-                            window.location.reload();
-                          }
-                        }}>
-                          <Trash2 size={14} />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -264,14 +256,6 @@ const Payments = () => {
                 <div className="flex items-center gap-2 pt-3 border-t mt-1">
                   <Button variant="outline" size="sm" className="flex-1 h-8 text-xs gap-1" onClick={() => { setSelectedPayment(payment); setIsModalOpen(true); }}>
                     <Edit size={12} /> Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-[0.5] h-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={async () => {
-                    if (window.confirm('Delete payment?')) {
-                      await api.delete(`/payments/${payment.id}`);
-                      window.location.reload();
-                    }
-                  }}>
-                    <Trash2 size={12} />
                   </Button>
                 </div>
               </div>

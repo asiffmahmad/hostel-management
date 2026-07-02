@@ -41,8 +41,8 @@ public class DashboardServiceImpl implements DashboardService {
         
         // Calculate overall occupancy dynamically
         List<com.hostel.backend.entity.Bed> beds = hostelId != null
-                ? bedRepository.findAll().stream().filter(b -> b.getRoom().getHostel().getId().equals(hostelId)).collect(java.util.stream.Collectors.toList())
-                : bedRepository.findAll();
+                ? bedRepository.findByRoomHostelIdAndIsDeletedFalse(hostelId)
+                : bedRepository.findByIsDeletedFalse();
                 
         long totalBeds = beds.size();
         long occupiedBeds = beds.stream()

@@ -81,7 +81,7 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
         
-        long occupiedBeds = bedRepository.findByRoomId(id).stream()
+        long occupiedBeds = bedRepository.findByRoomIdAndIsDeletedFalse(id).stream()
                 .filter(b -> b.getStatus() == BedStatus.OCCUPIED)
                 .count();
         if (occupiedBeds > 0) {
@@ -95,7 +95,7 @@ public class RoomServiceImpl implements RoomService {
 
     private RoomDTO mapToDtoWithOccupancy(Room room) {
         RoomDTO dto = roomMapper.toDTO(room);
-        int occupied = (int) bedRepository.findByRoomId(room.getId()).stream()
+        int occupied = (int) bedRepository.findByRoomIdAndIsDeletedFalse(room.getId()).stream()
                 .filter(b -> b.getStatus() == BedStatus.OCCUPIED)
                 .count();
         dto.setOccupiedBeds(occupied);

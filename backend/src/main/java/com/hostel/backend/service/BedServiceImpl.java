@@ -72,7 +72,7 @@ public class BedServiceImpl implements BedService {
 
     @Override
     public List<BedDTO> getBedsByRoomId(Long roomId) {
-        return bedRepository.findByRoomId(roomId).stream()
+        return bedRepository.findByRoomIdAndIsDeletedFalse(roomId).stream()
                 .map(bedMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -80,11 +80,11 @@ public class BedServiceImpl implements BedService {
     @Override
     public List<BedDTO> getAllBeds(Long hostelId) {
         if (hostelId != null) {
-            return bedRepository.findByRoomHostelId(hostelId).stream()
+            return bedRepository.findByRoomHostelIdAndIsDeletedFalse(hostelId).stream()
                     .map(bedMapper::toDto)
                     .collect(Collectors.toList());
         }
-        return bedRepository.findAll().stream()
+        return bedRepository.findByIsDeletedFalse().stream()
                 .map(bedMapper::toDto)
                 .collect(Collectors.toList());
     }

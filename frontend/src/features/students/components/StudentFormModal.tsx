@@ -112,10 +112,9 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
         status: initialData?.status || 'ACTIVE',
         bedId: initialData?.bedId || 0,
       });
-      // Reset dropdowns if it's a new student. If editing, we might not have hostel/room ID easily available 
-      // without extra backend calls, so we'll just reset them for simplicity.
-      setSelectedHostelId('');
-      setSelectedRoomId('');
+      // Reset dropdowns if it's a new student. If editing, we populate them from the student data.
+      setSelectedHostelId(initialData?.hostelId || '');
+      setSelectedRoomId(initialData?.roomId || '');
     }
   }, [initialData, isOpen, form]);
 

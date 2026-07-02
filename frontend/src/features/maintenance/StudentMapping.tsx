@@ -13,6 +13,8 @@ interface Student {
   studentId: string;
   name: string;
   bedId: number | null;
+  roomId?: number;
+  hostelId?: number;
 }
 
 interface Hostel { id: number; name: string; }
@@ -81,8 +83,6 @@ export default function StudentMapping() {
     try {
       const { data } = await api.get(`/rooms/hostel/${hostelId}`);
       setRooms(data);
-      setSelectedRoomId('');
-      setSelectedBedId('');
     } catch (error) {
       console.error(error);
     }
@@ -91,12 +91,18 @@ export default function StudentMapping() {
   const fetchBeds = async (roomId: string) => {
     try {
       const { data } = await api.get(`/beds/room/${roomId}`);
-      setBeds(data.filter((b: Bed) => b.status === 'VACANT'));
-      setSelectedBedId('');
+      // When populating beds for a transfer, we want VACANT beds, PLUS the student's CURRENT bed
+      setBeds(data.filter((b: Bed) => b.status === 'VACANT' || transferringId && selectedBedId === b.id.toString()));
     } catch (error) {
       console.error(error);
     }
   };
+
+  // Re-fetch beds if the transferringId or selectedBedId state updates 
+  // so the current bed appears in the dropdown.
+  useEffect(() => {
+    if (selectedRoomId) fetchBeds(selectedRoomId);
+  }, [transferringId]);
 
   const handleTransfer = async (id: number) => {
     if (!selectedBedId) return toast({ title: 'Please select a Bed', variant: 'destructive' });
@@ -157,11 +163,11 @@ export default function StudentMapping() {
                     <TableCell>
                       {transferringId === s.id ? (
                         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full min-w-[200px]">
-                          <select className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedHostelId} onChange={e => setSelectedHostelId(e.target.value)}>
+                          <select className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedHostelId} onChange={e => { setSelectedHostelId(e.target.value); setSelectedRoomId(''); setSelectedBedId(''); }}>
                             <option value="">Select Hostel</option>
                             {hostels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
-                          <select className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedRoomId} onChange={e => setSelectedRoomId(e.target.value)} disabled={!selectedHostelId}>
+                          <select className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedRoomId} onChange={e => { setSelectedRoomId(e.target.value); setSelectedBedId(''); }} disabled={!selectedHostelId}>
                             <option value="">Select Room</option>
                             {rooms.map(r => <option key={r.id} value={r.id}>{r.roomNumber}</option>)}
                           </select>
@@ -180,7 +186,12 @@ export default function StudentMapping() {
                         </div>
                       ) : (
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setTransferringId(s.id)}>
+                          <Button variant="outline" size="sm" onClick={() => { 
+                            setTransferringId(s.id);
+                            setSelectedHostelId(s.hostelId?.toString() || '');
+                            setSelectedRoomId(s.roomId?.toString() || '');
+                            setSelectedBedId(s.bedId?.toString() || '');
+                          }}>
                             Transfer <ArrowRight className="ml-1 h-3 w-3" />
                           </Button>
                           {s.bedId && (

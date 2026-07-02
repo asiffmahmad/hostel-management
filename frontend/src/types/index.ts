@@ -45,6 +45,8 @@ export interface Student {
   address?: string;
   joiningDate?: string;
   bedId?: number;
+  roomId?: number;
+  hostelId?: number;
   monthlyRent: number;
   advanceDeposit: number;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'GRADUATED';

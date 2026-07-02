@@ -39,6 +39,8 @@ public class StudentDTO {
     private String address;
     private LocalDate joiningDate;
     private Long bedId;
+    private Long roomId;
+    private Long hostelId;
     
     @NotNull
     private Double monthlyRent;

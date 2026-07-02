@@ -34,6 +34,12 @@ public class StudentMapper {
         
         if (entity.getBed() != null) {
             dto.setBedId(entity.getBed().getId());
+            if (entity.getBed().getRoom() != null) {
+                dto.setRoomId(entity.getBed().getRoom().getId());
+                if (entity.getBed().getRoom().getHostel() != null) {
+                    dto.setHostelId(entity.getBed().getRoom().getHostel().getId());
+                }
+            }
         }
 
         dto.setMonthlyRent(entity.getMonthlyRent());

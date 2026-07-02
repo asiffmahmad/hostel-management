@@ -43,6 +43,19 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
     },
   });
 
+  React.useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        studentId: initialData?.studentId || 0,
+        amount: initialData?.amount || 0,
+        month: initialData?.month || new Date().toLocaleString('default', { month: 'long' }),
+        year: initialData?.year || new Date().getFullYear().toString(),
+        status: initialData?.status || 'PENDING',
+        dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
+      });
+    }
+  }, [initialData, isOpen, form]);
+
   const mutation = useMutation({
     mutationFn: async (data: PaymentFormValues) => {
       if (initialData) {
