@@ -10,12 +10,14 @@ import api from '@/services/api';
 import type { Hostel } from '@/types';
 import { useHostel } from '@/app/HostelContext';
 import { HostelFormModal } from './components/HostelFormModal';
+import { useToast } from '@/hooks/use-toast';
 
 const Hostels = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHostel, setSelectedHostel] = useState<Hostel | undefined>(undefined);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: hostels, isLoading } = useQuery<Hostel[]>({
     queryKey: ['hostels'],
@@ -28,9 +30,7 @@ const Hostels = () => {
   const { selectedHostelId } = useHostel();
 
   const filteredHostels = hostels?.filter((h) => {
-    const matchesSearch = h.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesHostel = selectedHostelId ? h.id.toString() === selectedHostelId : true;
-    return matchesSearch && matchesHostel;
+    return h.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -85,8 +85,16 @@ const Hostels = () => {
                     </Button>
                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={async () => {
                       if (window.confirm('Are you sure you want to delete this hostel?')) {
-                        await api.delete(`/hostels/${hostel.id}`);
-                        window.location.reload();
+                        try {
+                          await api.delete(`/hostels/${hostel.id}`);
+                          window.location.reload();
+                        } catch (error: any) {
+                          toast({
+                            title: 'Failed to delete hostel',
+                            description: error.response?.data?.message || 'An unexpected error occurred.',
+                            variant: 'destructive',
+                          });
+                        }
                       }
                     }}>
                       <Trash2 size={14} />

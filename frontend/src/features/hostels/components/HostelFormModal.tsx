@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -26,6 +27,7 @@ interface HostelFormModalProps {
 
 export const HostelFormModal = ({ isOpen, onClose, initialData }: HostelFormModalProps) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const form = useForm<HostelFormValues>({
     // @ts-ignore
@@ -61,6 +63,13 @@ export const HostelFormModal = ({ isOpen, onClose, initialData }: HostelFormModa
       onClose();
       form.reset();
     },
+    onError: (error: any) => {
+      toast({
+        title: 'Error saving hostel',
+        description: error.response?.data?.message || 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    }
   });
 
   const onSubmit = (data: HostelFormValues) => {

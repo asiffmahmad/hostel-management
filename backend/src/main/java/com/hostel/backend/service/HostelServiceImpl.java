@@ -25,6 +25,12 @@ public class HostelServiceImpl implements HostelService {
 
     @Override
     public HostelDTO createHostel(HostelDTO hostelDTO) {
+        if (hostelRepository.existsByNameAndIsDeletedFalse(hostelDTO.getName())) {
+            throw new IllegalArgumentException("Hostel with this name already exists");
+        }
+        if (hostelDTO.getHostelCode() != null && hostelRepository.existsByHostelCodeAndIsDeletedFalse(hostelDTO.getHostelCode())) {
+            throw new IllegalArgumentException("Hostel with this code already exists");
+        }
         Hostel hostel = hostelMapper.toEntity(hostelDTO);
         Hostel savedHostel = hostelRepository.save(hostel);
         return mapToDtoWithDynamicStats(savedHostel);
@@ -34,6 +40,15 @@ public class HostelServiceImpl implements HostelService {
     public HostelDTO updateHostel(Long id, HostelDTO hostelDTO) {
         Hostel existingHostel = hostelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hostel not found with id: " + id));
+
+        if (!existingHostel.getName().equals(hostelDTO.getName()) && hostelRepository.existsByNameAndIsDeletedFalse(hostelDTO.getName())) {
+            throw new IllegalArgumentException("Hostel with this name already exists");
+        }
+        if (hostelDTO.getHostelCode() != null && 
+            !hostelDTO.getHostelCode().equals(existingHostel.getHostelCode()) && 
+            hostelRepository.existsByHostelCodeAndIsDeletedFalse(hostelDTO.getHostelCode())) {
+            throw new IllegalArgumentException("Hostel with this code already exists");
+        }
 
         existingHostel.setName(hostelDTO.getName());
         existingHostel.setHostelCode(hostelDTO.getHostelCode());
@@ -72,9 +87,14 @@ public class HostelServiceImpl implements HostelService {
             throw new IllegalStateException("Cannot delete hostel with occupied beds.");
         }
         
-        // Soft delete
+        // Soft delete and remove unique constraints conflicts
         hostel.setIsDeleted(true);
         hostel.setIsActive(false);
+        hostel.setName(hostel.getName() + "_DELETED_" + System.currentTimeMillis());
+        if (hostel.getHostelCode() != null) {
+            hostel.setHostelCode(hostel.getHostelCode() + "_DELETED_" + System.currentTimeMillis());
+        }
+        
         hostelRepository.save(hostel);
     }
     

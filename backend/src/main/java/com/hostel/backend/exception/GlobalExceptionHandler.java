@@ -74,6 +74,18 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
     }
+    
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ErrorDetails> handleBadRequestExceptions(RuntimeException exception,
+                                                                    WebRequest webRequest){
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                exception.getMessage(),
+                webRequest.getDescription(false),
+                "BAD_REQUEST"
+        );
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDetails> handleGlobalException(Exception exception,
