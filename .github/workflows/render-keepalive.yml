@@ -1,0 +1,58 @@
+name: Render Keep Alive
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping-health-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Workflow Started
+        run: echo "Workflow Started"
+
+      - name: Calling Health Endpoint
+        run: |
+          echo "Calling Health Endpoint: ${{ secrets.RENDER_HEALTH_URL }}"
+          MAX_RETRIES=3
+          RETRY_DELAY=10
+          RETRY_COUNT=0
+          SUCCESS=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            # Capture HTTP status, response time, and body using curl
+            OUTPUT=$(curl -s -w "\n%{http_code}\n%{time_total}" --max-time 30 ${{ secrets.RENDER_HEALTH_URL }}) || echo "Curl failed"
+            
+            HTTP_STATUS=$(echo "$OUTPUT" | tail -n 2 | head -n 1)
+            RESPONSE_TIME=$(echo "$OUTPUT" | tail -n 1)
+            
+            echo "HTTP Status: $HTTP_STATUS"
+            echo "Response Time: ${RESPONSE_TIME}s"
+            
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Success: true"
+              echo "Failure: false"
+              SUCCESS=true
+              break
+            else
+              echo "Success: false"
+              echo "Failure: true"
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              echo "Retry Count: $RETRY_COUNT"
+              
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Waiting $RETRY_DELAY seconds before retrying..."
+                sleep $RETRY_DELAY
+              fi
+            fi
+          done
+          
+          if [ "$SUCCESS" = false ]; then
+            echo "Endpoint failed after $MAX_RETRIES retries."
+            exit 1
+          fi
+
+      - name: Workflow Completed
+        run: echo "Workflow Completed"
