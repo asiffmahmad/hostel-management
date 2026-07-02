@@ -1,6 +1,6 @@
 export function useToast() {
   return {
-    toast: (title: string, description?: string) => {
+    toast: ({ title, variant }: { title: string, variant?: string }) => {
       // Toast logic would go here
     }
   };
