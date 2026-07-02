@@ -1,8 +1,30 @@
+# Node
 node_modules/
-.env
-dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java/Spring
 target/
+*.jar
+*.war
+*.ear
+
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+
+# IDEs and OS
 .idea/
 .vscode/
 *.iml
+.DS_Store
+**/.DS_Store
+
+# Build/Misc
+dist/
+build/
+.env
 scripts/

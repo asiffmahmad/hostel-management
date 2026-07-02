@@ -66,6 +66,7 @@ const AppLayout = () => {
   ];
 
   const maintenanceItems = [
+    { name: 'Admissions', path: '/admin/admissions', icon: Users },
     { name: 'Hostel Mgmt', path: '/maintenance/hostels', icon: Building },
     { name: 'Room Mgmt', path: '/maintenance/rooms', icon: Building },
     { name: 'Bed Mgmt', path: '/maintenance/beds', icon: BedDouble },

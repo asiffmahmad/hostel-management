@@ -78,3 +78,24 @@ export interface DashboardStats {
   recentAdmissions: any[];
   recentActivities: any[];
 }
+
+export interface AdmissionRequestCreateDTO {
+  studentName?: string;
+  email?: string;
+  phone?: string;
+  parentPhone?: string;
+  fatherName?: string;
+  aadhaarNumber?: string;
+  address?: string;
+  hostelCode?: string;
+  roomNumber?: string;
+  bedName?: string;
+}
+
+export interface AdmissionRequestResponseDTO extends AdmissionRequestCreateDTO {
+  id?: number;
+  status?: string;
+  rejectionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

@@ -1,7 +1,12 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
+const AdminAdmissions = lazy(() => import('@/components/AdminAdmissions'));
+
+
 import AppLayout from '@/components/layout/AppLayout';
+const AdmissionWizard = lazy(() => import('@/features/public/AdmissionWizard'));
+const AdmissionSuccess = lazy(() => import('@/components/AdmissionSuccess'));
 
 // Lazy load feature components
 const Login = lazy(() => import('@/features/auth/Login'));
@@ -34,6 +39,8 @@ const AppRoutes = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/login" element={<Login />} />
+          <Route path="/admission" element={<AdmissionWizard />} />
+          <Route path="/admission/success" element={<AdmissionSuccess />} />
         
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
@@ -54,6 +61,9 @@ const AppRoutes = () => {
             <Route path="/maintenance/mapping" element={<StudentMapping />} />
             <Route path="/maintenance/payment-check" element={<PaymentCheck />} />
             <Route path="/maintenance/settings" element={<SystemSettings />} />
+            
+            {/* Admin Admissions Route */}
+            <Route path="/admin/admissions" element={<AdminAdmissions />} />
           </Route>
         </Route>
         

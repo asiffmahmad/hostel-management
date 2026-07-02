@@ -41,6 +41,8 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, message);
         });
 
+        log.error("Validation Failed for request {}: {}", request.getDescription(false), errors);
+
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 "Validation Failed",

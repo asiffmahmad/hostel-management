@@ -11,9 +11,11 @@ import java.util.List;
 
 @Repository
 public interface BedRepository extends JpaRepository<Bed, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Bed> {
+    List<Bed> findByRoomId(Long roomId);
     List<Bed> findByRoomIdAndIsDeletedFalse(Long roomId);
     List<Bed> findByRoomHostelIdAndIsDeletedFalse(Long hostelId);
     List<Bed> findByIsDeletedFalse();
+    java.util.Optional<Bed> findByRoomIdAndBedNumberAndIsDeletedFalse(Long roomId, String bedNumber);
 
     @Query("SELECT COUNT(b) FROM Bed b WHERE b.room.hostel.id = :hostelId AND b.isDeleted = false AND b.room.isDeleted = false")
     int countBedsByHostelId(@Param("hostelId") Long hostelId);
