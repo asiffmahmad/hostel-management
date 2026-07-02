@@ -54,7 +54,7 @@ public class PaymentMapper {
         entity.setDueDate(dto.getDueDate());
 
         // UTR / Bank fields
-        entity.setUtrNumber(dto.getUtrNumber());
+        entity.setUtrNumber(dto.getUtrNumber() != null && dto.getUtrNumber().isBlank() ? null : dto.getUtrNumber());
         entity.setBankTransactionId(dto.getBankTransactionId());
         entity.setPaymentSource(dto.getPaymentSource() != null ? dto.getPaymentSource() : "MANUAL");
         entity.setBankName(dto.getBankName());

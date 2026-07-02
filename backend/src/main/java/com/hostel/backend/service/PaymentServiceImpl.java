@@ -66,7 +66,9 @@ public class PaymentServiceImpl implements PaymentService {
         existingPayment.setDueDate(paymentDTO.getDueDate());
 
         // Update UTR / Bank fields if provided
-        if (paymentDTO.getUtrNumber() != null) existingPayment.setUtrNumber(paymentDTO.getUtrNumber());
+        if (paymentDTO.getUtrNumber() != null) {
+            existingPayment.setUtrNumber(paymentDTO.getUtrNumber().isBlank() ? null : paymentDTO.getUtrNumber());
+        }
         if (paymentDTO.getBankName() != null) existingPayment.setBankName(paymentDTO.getBankName());
         if (paymentDTO.getPaymentSource() != null) existingPayment.setPaymentSource(paymentDTO.getPaymentSource());
         if (paymentDTO.getBankTransactionId() != null) existingPayment.setBankTransactionId(paymentDTO.getBankTransactionId());

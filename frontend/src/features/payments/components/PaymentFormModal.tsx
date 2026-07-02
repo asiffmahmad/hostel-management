@@ -17,6 +17,7 @@ const paymentSchema = z.object({
   year: z.string().min(4, 'Year is required'),
   status: z.enum(['PAID', 'PENDING', 'OVERDUE']),
   dueDate: z.string().min(1, 'Due date is required'),
+  utrNumber: z.string().optional().or(z.literal('')),
 });
 
 type PaymentFormValues = z.infer<typeof paymentSchema>;
@@ -40,6 +41,7 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
       year: initialData?.year || new Date().getFullYear().toString(),
       status: initialData?.status || 'PENDING',
       dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
+      utrNumber: initialData?.utrNumber || '',
     },
   });
 
@@ -52,6 +54,7 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
         year: initialData?.year || new Date().getFullYear().toString(),
         status: initialData?.status || 'PENDING',
         dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
+        utrNumber: initialData?.utrNumber || '',
       });
     }
   }, [initialData, isOpen, form]);
@@ -170,6 +173,20 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
                       <option value="PENDING">PENDING</option>
                       <option value="OVERDUE">OVERDUE</option>
                     </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control as any}
+              name="utrNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>UTR Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Leave blank if N/A" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

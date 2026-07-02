@@ -61,6 +61,7 @@ export interface Payment {
   year: string;
   status: 'PAID' | 'PENDING' | 'OVERDUE';
   dueDate: string;
+  utrNumber?: string;
 }
 
 export interface DashboardStats {
