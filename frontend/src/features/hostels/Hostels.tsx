@@ -90,8 +90,7 @@ const Hostels = () => {
                           window.location.reload();
                         } catch (error: any) {
                           toast({
-                            title: 'Failed to delete hostel',
-                            description: error.response?.data?.message || 'An unexpected error occurred.',
+                            title: error.response?.data?.message || 'Failed to delete hostel',
                             variant: 'destructive',
                           });
                         }

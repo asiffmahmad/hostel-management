@@ -65,8 +65,7 @@ export const HostelFormModal = ({ isOpen, onClose, initialData }: HostelFormModa
     },
     onError: (error: any) => {
       toast({
-        title: 'Error saving hostel',
-        description: error.response?.data?.message || 'An unexpected error occurred.',
+        title: error.response?.data?.message || 'Error saving hostel',
         variant: 'destructive',
       });
     }
