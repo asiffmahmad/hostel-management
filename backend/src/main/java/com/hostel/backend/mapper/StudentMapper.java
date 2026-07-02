@@ -30,6 +30,7 @@ public class StudentMapper {
         dto.setNotes(entity.getNotes());
         dto.setEmail(entity.getEmail());
         dto.setAddress(entity.getAddress());
+        dto.setAadhaarNumber(entity.getAadhaarNumber());
         dto.setJoiningDate(entity.getJoiningDate());
         
         if (entity.getBed() != null) {
@@ -71,6 +72,7 @@ public class StudentMapper {
         entity.setNotes(dto.getNotes());
         entity.setEmail(dto.getEmail());
         entity.setAddress(dto.getAddress());
+        entity.setAadhaarNumber(dto.getAadhaarNumber());
         entity.setJoiningDate(dto.getJoiningDate());
         
         if (dto.getBedId() != null) {

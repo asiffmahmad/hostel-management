@@ -92,6 +92,7 @@ export default function Students() {
                 <TableHead>Contact</TableHead>
                 <TableHead>Rent</TableHead>
                 <TableHead>Address</TableHead>
+                <TableHead>Aadhaar</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
@@ -99,13 +100,13 @@ export default function Students() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     Loading students...
                   </TableCell>
                 </TableRow>
               ) : filteredStudents?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     No students found.
                   </TableCell>
                 </TableRow>
@@ -145,6 +146,9 @@ export default function Students() {
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">
                       {student.address || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-mono text-sm">
+                      {student.aadhaarNumber || 'N/A'}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -229,6 +233,10 @@ export default function Students() {
                   <div className="flex flex-col col-span-2">
                     <span className="text-xs text-muted-foreground">Email</span>
                     <span className="truncate">{student.email || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-xs text-muted-foreground">Aadhaar</span>
+                    <span className="truncate font-mono">{student.aadhaarNumber || 'N/A'}</span>
                   </div>
                   <div className="flex flex-col col-span-2">
                     <span className="text-xs text-muted-foreground">Parent</span>

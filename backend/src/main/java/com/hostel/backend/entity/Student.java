@@ -95,6 +95,15 @@ public class Student extends BaseEntity {
     @Column(name = "address_encrypted", columnDefinition = "TEXT")
     private String addressEncrypted;
 
+    @Transient
+    private String aadhaarNumber;
+
+    @Column(name = "aadhaar_number_encrypted")
+    private String aadhaarNumberEncrypted;
+
+    @Column(name = "aadhaar_number_hash")
+    private String aadhaarNumberHash;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -147,6 +156,10 @@ public class Student extends BaseEntity {
         if (this.address != null) {
             this.addressEncrypted = com.hostel.backend.security.EncryptionContext.encrypt(this.address);
         }
+        if (this.aadhaarNumber != null) {
+            this.aadhaarNumberEncrypted = com.hostel.backend.security.EncryptionContext.encrypt(this.aadhaarNumber);
+            this.aadhaarNumberHash = com.hostel.backend.security.EncryptionContext.hash(this.aadhaarNumber);
+        }
     }
 
     @PostLoad
@@ -171,6 +184,9 @@ public class Student extends BaseEntity {
         }
         if (this.addressEncrypted != null) {
             this.address = com.hostel.backend.security.EncryptionContext.decrypt(this.addressEncrypted);
+        }
+        if (this.aadhaarNumberEncrypted != null) {
+            this.aadhaarNumber = com.hostel.backend.security.EncryptionContext.decrypt(this.aadhaarNumberEncrypted);
         }
     }
 }

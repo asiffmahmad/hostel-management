@@ -42,6 +42,7 @@ export interface Student {
   guardianPhone?: string;
   notes?: string;
   email?: string;
+  aadhaarNumber?: string;
   address?: string;
   joiningDate?: string;
   bedId?: number;

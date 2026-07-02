@@ -37,6 +37,7 @@ public class StudentDTO {
     private String email;
     
     private String address;
+    private String aadhaarNumber;
     private LocalDate joiningDate;
     private Long bedId;
     private Long roomId;

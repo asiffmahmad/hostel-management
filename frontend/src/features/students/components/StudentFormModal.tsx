@@ -24,6 +24,7 @@ const studentSchema = z.object({
   guardianPhone: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
   email: z.string().email().optional().or(z.literal('')),
+  aadhaarNumber: z.string().optional().or(z.literal('')),
   monthlyRent: z.coerce.number().min(0, 'Monthly rent must be >= 0'),
   advanceDeposit: z.coerce.number().min(0, 'Advance deposit must be >= 0'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'GRADUATED']),
@@ -92,6 +93,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
       guardianPhone: initialData?.guardianPhone || '',
       notes: initialData?.notes || '',
       email: initialData?.email || '',
+      aadhaarNumber: initialData?.aadhaarNumber || '',
       monthlyRent: initialData?.monthlyRent || 0,
       advanceDeposit: initialData?.advanceDeposit || 0,
       status: initialData?.status || 'ACTIVE',
@@ -107,6 +109,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
         phone: initialData?.phone || '',
         parentPhone: initialData?.parentPhone || '',
         email: initialData?.email || '',
+        aadhaarNumber: initialData?.aadhaarNumber || '',
         monthlyRent: initialData?.monthlyRent || 0,
         advanceDeposit: initialData?.advanceDeposit || 0,
         status: initialData?.status || 'ACTIVE',
@@ -173,6 +176,19 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="aadhaarNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Aadhaar Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1234-5678-9012" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

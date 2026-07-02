@@ -51,6 +51,10 @@ export const StudentDetailsModal = ({ isOpen, onClose, student }: StudentDetails
                 <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <span>{student.address || 'N/A'}</span>
               </div>
+              <div className="flex items-center gap-2 text-sm">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                <span className="font-mono">{student.aadhaarNumber || 'N/A'}</span>
+              </div>
             </div>
 
             <div className="space-y-3">
