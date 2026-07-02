@@ -57,7 +57,7 @@ public class HostelServiceImpl implements HostelService {
 
     @Override
     public List<HostelDTO> getAllHostels() {
-        return hostelRepository.findAll().stream()
+        return hostelRepository.findByIsDeletedFalse().stream()
                 .map(this::mapToDtoWithDynamicStats)
                 .collect(Collectors.toList());
     }
