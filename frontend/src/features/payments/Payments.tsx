@@ -16,6 +16,7 @@ import api from '@/services/api';
 import type { Payment } from '@/types';
 import { PaymentFormModal } from './components/PaymentFormModal';
 import { useToast } from '@/hooks/use-toast';
+import { useHostel } from '@/app/HostelContext';
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,11 +25,14 @@ const Payments = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | undefined>(undefined);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { selectedHostelId } = useHostel();
 
   const { data: payments, isLoading } = useQuery<Payment[]>({
-    queryKey: ['payments'],
+    queryKey: ['payments', selectedHostelId],
     queryFn: async () => {
-      const res = await api.get('/payments');
+      const res = await api.get('/payments', {
+        params: { hostelId: selectedHostelId || undefined }
+      });
       return res.data;
     },
   });
@@ -69,12 +73,23 @@ const Payments = () => {
     return matchesSearch && matchesMonth;
   });
 
+  const paidCount = filteredPayments?.filter((p: any) => p.status === 'PAID').length || 0;
+  const pendingCount = filteredPayments?.filter((p: any) => p.status === 'PENDING').length || 0;
+
   return (
     <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Payments & Receipts</h1>
           <p className="text-sm text-muted-foreground mt-1">Track fee collections and financial history.</p>
+          <div className="flex gap-2 mt-3">
+            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1 text-sm font-medium">
+              {paidCount} Paid
+            </Badge>
+            <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1 text-sm font-medium">
+              {pendingCount} Need to Pay
+            </Badge>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
           <Button variant="outline" className="gap-2">
@@ -113,88 +128,156 @@ const Payments = () => {
         </Button>
       </div>
 
-      <div className="rounded-md border flex-1 overflow-auto bg-background/50">
-        <Table>
-          <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-            <TableRow>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Student</TableHead>
-              <TableHead>UTR Number</TableHead>
-              <TableHead className="hidden md:table-cell">Period</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead className="hidden lg:table-cell">Source</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      <div className="flex-1 overflow-auto bg-background/50 rounded-md border">
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  Loading payments...
-                </TableCell>
+                <TableHead>Transaction ID</TableHead>
+                <TableHead>Student</TableHead>
+                <TableHead>UTR Number</TableHead>
+                <TableHead className="hidden md:table-cell">Period</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead className="hidden lg:table-cell">Source</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
               </TableRow>
-            ) : filteredPayments?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  No payments found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredPayments?.map((payment: any) => (
-                <TableRow key={payment.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium text-primary">PAY-{payment.id}</TableCell>
-                  <TableCell>{(payment as any).studentName || `STD-${payment.studentId}`}</TableCell>
-                  <TableCell>
-                    {(payment as any).utrNumber
-                      ? <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{(payment as any).utrNumber}</span>
-                      : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <Badge variant="outline" className="text-xs">
-                      {payment.month} {payment.year}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-semibold">₹{payment.amount.toFixed(2)}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : '✍️ Manual'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={payment.status === 'PAID' ? 'default' : payment.status === 'PENDING' ? 'secondary' : 'destructive'}
-                      className={
-                        payment.status === 'PAID' 
-                          ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                          : payment.status === 'PENDING'
-                            ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
-                            : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
-                      }
-                    >
-                      {payment.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" className="gap-1 h-8 text-muted-foreground hover:text-primary" onClick={() => { setSelectedPayment(payment); setIsModalOpen(true); }}>
-                        <Edit size={14} /> Edit
-                      </Button>
-                      <Button variant="ghost" size="sm" className="gap-1 h-8 text-destructive hover:text-destructive" onClick={async () => {
-                        if (window.confirm('Delete payment?')) {
-                          await api.delete(`/payments/${payment.id}`);
-                          window.location.reload();
-                        }
-                      }}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    Loading payments...
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : filteredPayments?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    No payments found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPayments?.map((payment: any) => (
+                  <TableRow key={payment.id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium text-primary">PAY-{payment.id}</TableCell>
+                    <TableCell>{(payment as any).studentName || `STD-${payment.studentId}`}</TableCell>
+                    <TableCell>
+                      {(payment as any).utrNumber
+                        ? <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{(payment as any).utrNumber}</span>
+                        : <span className="text-muted-foreground text-xs">—</span>}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline" className="text-xs">
+                        {payment.month} {payment.year}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold">₹{payment.amount.toFixed(2)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : '✍️ Manual'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={payment.status === 'PAID' ? 'default' : payment.status === 'PENDING' ? 'secondary' : 'destructive'}
+                        className={
+                          payment.status === 'PAID' 
+                            ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
+                            : payment.status === 'PENDING'
+                              ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                              : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                        }
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" className="gap-1 h-8 text-muted-foreground hover:text-primary" onClick={() => { setSelectedPayment(payment); setIsModalOpen(true); }}>
+                          <Edit size={14} /> Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" className="gap-1 h-8 text-destructive hover:text-destructive" onClick={async () => {
+                          if (window.confirm('Delete payment?')) {
+                            await api.delete(`/payments/${payment.id}`);
+                            window.location.reload();
+                          }
+                        }}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden flex flex-col gap-4 p-4">
+          {isLoading ? (
+            <div className="text-center text-muted-foreground p-8">Loading payments...</div>
+          ) : filteredPayments?.length === 0 ? (
+            <div className="text-center text-muted-foreground p-8">No payments found.</div>
+          ) : (
+            filteredPayments?.map((payment: any) => (
+              <div key={payment.id} className="bg-card border rounded-xl p-4 shadow-sm flex flex-col gap-3 relative">
+                <div className="flex items-start justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-semibold">{(payment as any).studentName || `STD-${payment.studentId}`}</h3>
+                    <p className="text-xs font-mono text-primary mt-1">PAY-{payment.id}</p>
+                  </div>
+                  <Badge
+                    variant={payment.status === 'PAID' ? 'default' : payment.status === 'PENDING' ? 'secondary' : 'destructive'}
+                    className={
+                      payment.status === 'PAID' 
+                        ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
+                        : payment.status === 'PENDING'
+                          ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                          : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                    }
+                  >
+                    {payment.status}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Amount</span>
+                    <span className="font-semibold">₹{payment.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Period</span>
+                    <span>{payment.month} {payment.year}</span>
+                  </div>
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-xs text-muted-foreground">UTR Number</span>
+                    <span className="font-mono text-xs">{payment.utrNumber || '—'}</span>
+                  </div>
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-xs text-muted-foreground">Source</span>
+                    <span className="capitalize">{(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank Import' : '✍️ Manual Entry'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-3 border-t mt-1">
+                  <Button variant="outline" size="sm" className="flex-1 h-8 text-xs gap-1" onClick={() => { setSelectedPayment(payment); setIsModalOpen(true); }}>
+                    <Edit size={12} /> Edit
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-[0.5] h-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={async () => {
+                    if (window.confirm('Delete payment?')) {
+                      await api.delete(`/payments/${payment.id}`);
+                      window.location.reload();
+                    }
+                  }}>
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <PaymentFormModal 

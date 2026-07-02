@@ -9,5 +9,6 @@ public interface BedService {
     BedDTO updateBed(Long id, BedDTO bedDTO);
     BedDTO getBedById(Long id);
     List<BedDTO> getBedsByRoomId(Long roomId);
+    List<BedDTO> getAllBeds(Long hostelId);
     void deleteBed(Long id);
 }

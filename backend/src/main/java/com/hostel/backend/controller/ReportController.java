@@ -22,9 +22,9 @@ public class ReportController {
 
     @GetMapping("/students/csv")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<InputStreamResource> exportStudentsCsv() throws IOException {
+    public ResponseEntity<InputStreamResource> exportStudentsCsv(@org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) throws IOException {
         String filename = "students_report.csv";
-        InputStreamResource file = new InputStreamResource(reportExportService.generateStudentReportCsv());
+        InputStreamResource file = new InputStreamResource(reportExportService.generateStudentReportCsv(hostelId));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.parseMediaType("application/csv"))
@@ -33,9 +33,9 @@ public class ReportController {
 
     @GetMapping("/students/pdf")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<InputStreamResource> exportStudentsPdf() throws IOException {
+    public ResponseEntity<InputStreamResource> exportStudentsPdf(@org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) throws IOException {
         String filename = "students_report.pdf";
-        InputStreamResource file = new InputStreamResource(reportExportService.generateStudentReportPdf());
+        InputStreamResource file = new InputStreamResource(reportExportService.generateStudentReportPdf(hostelId));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.APPLICATION_PDF)
@@ -44,9 +44,9 @@ public class ReportController {
 
     @GetMapping("/hostels/csv")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<InputStreamResource> exportHostelsCsv() throws IOException {
+    public ResponseEntity<InputStreamResource> exportHostelsCsv(@org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) throws IOException {
         String filename = "hostels_report.csv";
-        InputStreamResource file = new InputStreamResource(reportExportService.generateHostelReportCsv());
+        InputStreamResource file = new InputStreamResource(reportExportService.generateHostelReportCsv(hostelId));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.parseMediaType("application/csv"))
@@ -55,9 +55,9 @@ public class ReportController {
 
     @GetMapping("/hostels/pdf")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<InputStreamResource> exportHostelsPdf() throws IOException {
+    public ResponseEntity<InputStreamResource> exportHostelsPdf(@org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) throws IOException {
         String filename = "hostels_report.pdf";
-        InputStreamResource file = new InputStreamResource(reportExportService.generateHostelReportPdf());
+        InputStreamResource file = new InputStreamResource(reportExportService.generateHostelReportPdf(hostelId));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.APPLICATION_PDF)

@@ -27,8 +27,8 @@ public class StudentController {
 
     @GetMapping
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<List<StudentDTO>> getAllStudents() {
-        return ResponseEntity.ok(studentService.getAllStudents());
+    public ResponseEntity<List<StudentDTO>> getAllStudents(@RequestParam(required = false) Long hostelId) {
+        return ResponseEntity.ok(studentService.getAllStudents(hostelId));
     }
 
     @GetMapping("/{id}")

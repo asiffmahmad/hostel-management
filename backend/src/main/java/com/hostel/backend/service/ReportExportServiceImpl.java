@@ -30,8 +30,10 @@ public class ReportExportServiceImpl implements ReportExportService {
     private final PaymentRepository paymentRepository;
 
     @Override
-    public ByteArrayInputStream generateStudentReportCsv() throws IOException {
-        List<Student> students = studentRepository.findAll();
+    public ByteArrayInputStream generateStudentReportCsv(Long hostelId) throws IOException {
+        List<Student> students = (hostelId != null) 
+                ? studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                : studentRepository.findAll();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(out))) {
             String[] header = {"Student ID", "Name", "Phone", "Email", "Status", "Monthly Rent", "Advance Deposit"};
@@ -54,8 +56,10 @@ public class ReportExportServiceImpl implements ReportExportService {
     }
 
     @Override
-    public ByteArrayInputStream generateStudentReportPdf() throws IOException {
-        List<Student> students = studentRepository.findAll();
+    public ByteArrayInputStream generateStudentReportPdf(Long hostelId) throws IOException {
+        List<Student> students = (hostelId != null) 
+                ? studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                : studentRepository.findAll();
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
             document.addPage(page);
@@ -92,8 +96,10 @@ public class ReportExportServiceImpl implements ReportExportService {
     }
 
     @Override
-    public ByteArrayInputStream generateHostelReportCsv() throws IOException {
-        List<Hostel> hostels = hostelRepository.findAll();
+    public ByteArrayInputStream generateHostelReportCsv(Long hostelId) throws IOException {
+        List<Hostel> hostels = (hostelId != null)
+                ? hostelRepository.findById(hostelId).map(List::of).orElse(List.of())
+                : hostelRepository.findAll();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(out))) {
             String[] header = {"Hostel Code", "Name", "Type", "Status"};
@@ -113,7 +119,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     }
 
     @Override
-    public ByteArrayInputStream generateHostelReportPdf() throws IOException {
+    public ByteArrayInputStream generateHostelReportPdf(Long hostelId) throws IOException {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
             document.addPage(page);

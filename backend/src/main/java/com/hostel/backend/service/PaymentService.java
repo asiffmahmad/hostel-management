@@ -9,7 +9,7 @@ public interface PaymentService {
     PaymentDTO updatePayment(Long id, PaymentDTO paymentDTO);
     PaymentDTO getPaymentById(Long id);
     List<PaymentDTO> getPaymentsByStudentId(Long studentId);
-    List<PaymentDTO> getAllPayments();
+    List<PaymentDTO> getAllPayments(Long hostelId);
     void deletePayment(Long id);
     void generateMonthlyInvoices(String month, String year);
     Optional<PaymentDTO> searchByUtr(String utrNumber);

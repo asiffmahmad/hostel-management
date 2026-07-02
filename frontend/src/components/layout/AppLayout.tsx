@@ -23,6 +23,7 @@ import {
   Landmark,
   MessageSquareWarning
 } from 'lucide-react';
+import HostelFilter from '@/components/HostelFilter';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -208,7 +209,8 @@ const AppLayout = () => {
             </h2>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <HostelFilter />
             <Button
               variant="ghost"
               size="icon"

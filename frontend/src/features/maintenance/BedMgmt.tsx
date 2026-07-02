@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useHostel } from '@/app/HostelContext';
 
 interface Bed {
   id: number;
@@ -26,28 +27,19 @@ export default function BedMgmt() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBed, setSelectedBed] = useState<Bed | null>(null);
   const [formData, setFormData] = useState({ roomId: '', bedNumber: '', bedName: '', status: 'VACANT' });
+  const { selectedHostelId } = useHostel();
 
   useEffect(() => {
     fetchBeds();
-  }, []);
+  }, [selectedHostelId]);
 
   const fetchBeds = async () => {
     try {
       setLoading(true);
-      const { data: hostels } = await api.get('/hostels');
-      let allRooms: any[] = [];
-      for (const h of hostels) {
-        const { data } = await api.get(`/rooms/hostel/${h.id}`);
-        allRooms = [...allRooms, ...data];
-      }
-      
-      let allBeds: Bed[] = [];
-      for (const r of allRooms) {
-        const { data } = await api.get(`/beds/room/${r.id}`);
-        allBeds = [...allBeds, ...data];
-      }
-      
-      setBeds(allBeds);
+      const { data } = await api.get('/beds', {
+        params: { hostelId: selectedHostelId || undefined }
+      });
+      setBeds(data);
     } catch (error) {
       toast({ title: 'Error fetching beds', variant: 'destructive' });
     } finally {

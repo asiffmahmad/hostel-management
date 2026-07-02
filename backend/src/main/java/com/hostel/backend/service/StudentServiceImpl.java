@@ -92,8 +92,14 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public List<StudentDTO> getAllStudents() {
-        return studentRepository.findByIsDeletedFalse().stream()
+    public List<StudentDTO> getAllStudents(Long hostelId) {
+        List<Student> students;
+        if (hostelId != null) {
+            students = studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId);
+        } else {
+            students = studentRepository.findByIsDeletedFalse();
+        }
+        return students.stream()
                 .map(studentMapper::toDto)
                 .collect(Collectors.toList());
     }

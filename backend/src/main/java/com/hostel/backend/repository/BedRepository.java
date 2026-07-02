@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface BedRepository extends JpaRepository<Bed, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Bed> {
     List<Bed> findByRoomId(Long roomId);
+    List<Bed> findByRoomHostelId(Long hostelId);
 
     @Query("SELECT COUNT(b) FROM Bed b WHERE b.room.hostel.id = :hostelId")
     int countBedsByHostelId(@Param("hostelId") Long hostelId);

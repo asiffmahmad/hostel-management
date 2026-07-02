@@ -66,6 +66,7 @@ export interface DashboardStats {
   occupiedStudents: number;
   totalBeds: number;
   occupiedBeds: number;
+  vacantBeds: number;
   occupancyRate: number;
   monthlyRevenue: number;
   revenueData: { name: string; total: number }[];

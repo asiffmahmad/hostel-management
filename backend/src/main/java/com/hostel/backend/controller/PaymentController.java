@@ -27,8 +27,8 @@ public class PaymentController {
 
     @GetMapping
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<List<PaymentDTO>> getAllPayments() {
-        return ResponseEntity.ok(paymentService.getAllPayments());
+    public ResponseEntity<List<PaymentDTO>> getAllPayments(@RequestParam(required = false) Long hostelId) {
+        return ResponseEntity.ok(paymentService.getAllPayments(hostelId));
     }
 
     @GetMapping("/student/{studentId}")

@@ -13,6 +13,7 @@ public class DashboardStatsDTO {
     private long occupiedStudents;
     private long totalBeds;
     private long occupiedBeds;
+    private long vacantBeds;
     private double occupancyRate;
     private double monthlyRevenue;
     

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Building, BedDouble, Wallet, TrendingUp, Activity } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useHostel } from '@/app/HostelContext';
 import {
   AreaChart,
   Area,
@@ -21,7 +21,7 @@ import api from '@/services/api';
 import type { DashboardStats, Hostel } from '@/types';
 
 const Dashboard = () => {
-  const [selectedHostelId, setSelectedHostelId] = useState<string>('');
+  const { selectedHostelId } = useHostel();
 
   const { data: hostels } = useQuery<Hostel[]>({
     queryKey: ['hostels'],
@@ -32,12 +32,14 @@ const Dashboard = () => {
   });
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ['dashboardStats', selectedHostelId],
+    queryKey: ['dashboard', 'stats', selectedHostelId],
     queryFn: async () => {
-      const url = selectedHostelId ? `/dashboard/stats?hostelId=${selectedHostelId}` : '/dashboard/stats';
-      const res = await api.get(url);
-      return res.data;
+      const { data } = await api.get('/dashboard/stats', {
+        params: { hostelId: selectedHostelId || undefined }
+      });
+      return data;
     },
+    refetchInterval: 30000,
   });
 
   const selectedHostelName = selectedHostelId 
@@ -48,6 +50,7 @@ const Dashboard = () => {
     { title: selectedHostelName ? 'Selected Hostel' : 'Total Hostels', value: selectedHostelName || stats?.totalHostels || 0, icon: Building, color: 'text-blue-500' },
     { title: 'Total Beds', value: stats?.totalBeds || 0, icon: BedDouble, color: 'text-orange-500' },
     { title: 'Occupied Beds', value: stats?.occupiedBeds || 0, icon: BedDouble, color: 'text-red-500' },
+    { title: 'Vacant Beds', value: stats?.vacantBeds || 0, icon: BedDouble, color: 'text-green-500' },
     { title: 'Occupancy Rate', value: `${stats?.occupancyRate || 0}%`, icon: BedDouble, color: 'text-teal-500' },
     { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue || 0}`, icon: Wallet, color: 'text-purple-500' },
   ];
@@ -61,16 +64,7 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            className="flex h-10 w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            value={selectedHostelId}
-            onChange={(e) => setSelectedHostelId(e.target.value)}
-          >
-            <option value="">All Hostels</option>
-            {hostels?.map((h) => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
+          {/* Hostel selection is now handled globally via the AppLayout header */}
         </div>
       </div>
 

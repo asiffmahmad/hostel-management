@@ -78,6 +78,18 @@ public class BedServiceImpl implements BedService {
     }
 
     @Override
+    public List<BedDTO> getAllBeds(Long hostelId) {
+        if (hostelId != null) {
+            return bedRepository.findByRoomHostelId(hostelId).stream()
+                    .map(bedMapper::toDto)
+                    .collect(Collectors.toList());
+        }
+        return bedRepository.findAll().stream()
+                .map(bedMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteBed(Long id) {
         Bed bed = bedRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bed not found with id: " + id));

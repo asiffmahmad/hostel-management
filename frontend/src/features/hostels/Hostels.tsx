@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import api from '@/services/api';
 import type { Hostel } from '@/types';
+import { useHostel } from '@/app/HostelContext';
 import { HostelFormModal } from './components/HostelFormModal';
 
 const Hostels = () => {
@@ -24,9 +25,13 @@ const Hostels = () => {
     },
   });
 
-  const filteredHostels = hostels?.filter((h) => 
-    h.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { selectedHostelId } = useHostel();
+
+  const filteredHostels = hostels?.filter((h) => {
+    const matchesSearch = h.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesHostel = selectedHostelId ? h.id.toString() === selectedHostelId : true;
+    return matchesSearch && matchesHostel;
+  });
 
   return (
     <div className="space-y-6">

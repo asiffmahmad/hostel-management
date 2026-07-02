@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { useHostel } from '@/app/HostelContext';
 
 interface Room {
   id: number;
@@ -41,21 +42,19 @@ export default function RoomMgmt() {
   const [roomBeds, setRoomBeds] = useState<Bed[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [bedsLoading, setBedsLoading] = useState(false);
+  const { selectedHostelId } = useHostel();
 
   useEffect(() => {
     fetchRooms();
-  }, []);
+  }, [selectedHostelId]);
 
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const { data: hostels } = await api.get('/hostels');
-      let allRooms: Room[] = [];
-      for (const h of hostels) {
-        const { data } = await api.get(`/rooms/hostel/${h.id}`);
-        allRooms = [...allRooms, ...data];
-      }
-      setRooms(allRooms);
+      const { data } = await api.get('/rooms', {
+        params: { hostelId: selectedHostelId || undefined }
+      });
+      setRooms(data);
     } catch (error) {
       toast({ title: 'Error fetching rooms', variant: 'destructive' });
     } finally {

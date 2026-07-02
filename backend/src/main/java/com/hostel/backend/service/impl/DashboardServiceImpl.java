@@ -3,6 +3,7 @@ package com.hostel.backend.service.impl;
 import com.hostel.backend.dto.DashboardStatsDTO;
 import com.hostel.backend.entity.Hostel;
 import com.hostel.backend.enums.BedStatus;
+import com.hostel.backend.enums.HostelStatus;
 import com.hostel.backend.repository.BedRepository;
 import com.hostel.backend.repository.HostelRepository;
 import com.hostel.backend.repository.PaymentRepository;
@@ -27,7 +28,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsDTO getDashboardStats(Long hostelId) {
-        long totalHostels = hostelId != null ? 1 : hostelRepository.countByIsDeletedFalse();
+        long totalHostels = hostelId != null ? 1 : hostelRepository.findByIsDeletedFalse().stream().filter(h -> HostelStatus.ACTIVE.equals(h.getStatus())).count();
         
         List<com.hostel.backend.entity.Student> students = hostelId != null 
                 ? studentRepository.findByIsDeletedFalse().stream().filter(s -> s.getBed() != null && s.getBed().getRoom().getHostel().getId().equals(hostelId)).collect(java.util.stream.Collectors.toList())
@@ -83,8 +84,8 @@ public class DashboardServiceImpl implements DashboardService {
         // Occupancy Data Dynamic
         List<Map<String, Object>> occupancyData = new ArrayList<>();
         List<Hostel> hostels = hostelId != null 
-                ? hostelRepository.findById(hostelId).filter(h -> !h.getIsDeleted()).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
-                : hostelRepository.findByIsDeletedFalse();
+                ? hostelRepository.findById(hostelId).filter(h -> !h.getIsDeleted() && HostelStatus.ACTIVE.equals(h.getStatus())).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
+                : hostelRepository.findByIsDeletedFalse().stream().filter(h -> HostelStatus.ACTIVE.equals(h.getStatus())).collect(java.util.stream.Collectors.toList());
         for (Hostel h : hostels) {
             Map<String, Object> map = new HashMap<>();
             int hTotalBeds = bedRepository.countBedsByHostelId(h.getId());
@@ -128,6 +129,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .occupiedStudents(occupiedStudents)
                 .totalBeds(totalBeds)
                 .occupiedBeds(occupiedBeds)
+                .vacantBeds(totalBeds - occupiedBeds)
                 .occupancyRate(Math.round(occupancyRate * 100.0) / 100.0)
                 .monthlyRevenue(monthlyRevenue)
                 .revenueData(revenueData)

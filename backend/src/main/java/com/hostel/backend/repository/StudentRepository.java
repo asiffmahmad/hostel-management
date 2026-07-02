@@ -11,4 +11,5 @@ public interface StudentRepository extends JpaRepository<Student, Long>, org.spr
     List<Student> findByBedId(Long bedId);
     boolean existsByStudentId(String studentId);
     List<Student> findByIsDeletedFalse();
+    List<Student> findByBedRoomHostelIdAndIsDeletedFalse(Long hostelId);
 }

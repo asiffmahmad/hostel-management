@@ -25,6 +25,12 @@ public class RoomController {
         return new ResponseEntity<>(roomService.createRoom(roomDTO), HttpStatus.CREATED);
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<List<RoomDTO>> getAllRooms(@RequestParam(required = false) Long hostelId) {
+        return ResponseEntity.ok(roomService.getAllRooms(hostelId));
+    }
+
     @GetMapping("/hostel/{hostelId}")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
     public ResponseEntity<List<RoomDTO>> getRoomsByHostelId(@PathVariable Long hostelId) {

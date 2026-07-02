@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import api from '@/services/api';
 import { Loader2, ArrowRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useHostel } from '@/app/HostelContext';
 
 interface Student {
   id: number;
@@ -33,9 +34,13 @@ export default function StudentMapping() {
 
   const [transferReason, setTransferReason] = useState('Room change requested');
   const { toast } = useToast();
+  const { selectedHostelId: globalHostelId } = useHostel();
 
   useEffect(() => {
     fetchStudents();
+  }, [globalHostelId]);
+
+  useEffect(() => {
     fetchHostels();
   }, []);
 
@@ -52,7 +57,9 @@ export default function StudentMapping() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/students');
+      const { data } = await api.get('/students', {
+        params: { hostelId: globalHostelId || undefined }
+      });
       setStudents(data);
     } catch (error) {
       toast({ title: 'Error fetching students', variant: 'destructive' });

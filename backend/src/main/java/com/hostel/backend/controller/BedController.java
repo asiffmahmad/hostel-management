@@ -25,6 +25,12 @@ public class BedController {
         return new ResponseEntity<>(bedService.createBed(bedDTO), HttpStatus.CREATED);
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<List<BedDTO>> getAllBeds(@RequestParam(required = false) Long hostelId) {
+        return ResponseEntity.ok(bedService.getAllBeds(hostelId));
+    }
+
     @GetMapping("/room/{roomId}")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
     public ResponseEntity<List<BedDTO>> getBedsByRoomId(@PathVariable Long roomId) {

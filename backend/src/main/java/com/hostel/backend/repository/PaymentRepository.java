@@ -29,5 +29,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpec
 
     @Query("SELECT p FROM Payment p WHERE p.student.id = :studentId ORDER BY p.createdAt DESC")
     List<Payment> findByStudentIdOrderByCreatedAtDesc(@Param("studentId") Long studentId);
+
+    @Query("SELECT p FROM Payment p WHERE p.student.bed.room.hostel.id = :hostelId ORDER BY p.createdAt DESC")
+    List<Payment> findByStudentBedRoomHostelIdOrderByCreatedAtDesc(@Param("hostelId") Long hostelId);
 }
 

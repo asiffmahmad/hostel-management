@@ -37,6 +37,16 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    public List<RoomDTO> getAllRooms(Long hostelId) {
+        if (hostelId != null) {
+            return getRoomsByHostelId(hostelId);
+        }
+        return roomRepository.findAll().stream()
+                .map(this::mapToDtoWithOccupancy)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<RoomDTO> getRoomsByHostelId(Long hostelId) {
         List<Room> rooms = roomRepository.findByHostelId(hostelId);
         return rooms.stream().map(this::mapToDtoWithOccupancy).collect(Collectors.toList());

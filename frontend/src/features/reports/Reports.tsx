@@ -5,10 +5,12 @@ import { Download, FileText, PieChart, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { useHostel } from '@/app/HostelContext';
 
 const Reports = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { selectedHostelId } = useHostel();
 
   const reportTypes = [
     { id: 1, name: 'Revenue Report', description: 'Monthly collection, due rents, and expenses.', icon: TrendingUp, color: 'text-green-500', route: '/payments', apiEndpoint: '/payments' },
@@ -19,7 +21,12 @@ const Reports = () => {
   const handleExport = async (endpoint: string, reportName: string) => {
     try {
       toast({ title: `Exporting ${reportName}...` });
-      const res = await api.get(endpoint);
+      
+      const params = (endpoint !== '/payments' && selectedHostelId) 
+        ? { hostelId: selectedHostelId } 
+        : {};
+        
+      const res = await api.get(endpoint, { params });
       const data = res.data;
       if (!data || data.length === 0) {
         toast({ title: 'No data to export', variant: 'destructive' });
