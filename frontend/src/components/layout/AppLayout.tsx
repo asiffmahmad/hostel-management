@@ -20,7 +20,8 @@ import {
   BedDouble,
   Settings,
   Map,
-  Landmark
+  Landmark,
+  MessageSquareWarning
 } from 'lucide-react';
 
 const AppLayout = () => {
@@ -59,6 +60,7 @@ const AppLayout = () => {
     { name: 'Hostels', path: '/hostels-overview', icon: Building },
     { name: 'Students', path: '/students', icon: Users },
     { name: 'Payments', path: '/payments', icon: CreditCard },
+    { name: 'Complaints', path: '/complaints', icon: MessageSquareWarning },
     { name: 'Reports', path: '/reports', icon: FileText },
   ];
 

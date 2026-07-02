@@ -9,6 +9,7 @@ import Rooms from '@/features/hostels/Rooms';
 import Students from '@/features/students/Students';
 import Payments from '@/features/payments/Payments';
 import Reports from '@/features/reports/Reports';
+import Complaints from '@/features/complaints/Complaints';
 import SystemSettings from '@/features/maintenance/SystemSettings';
 import RoomMgmt from '@/features/maintenance/RoomMgmt';
 import BedMgmt from '@/features/maintenance/BedMgmt';
@@ -33,6 +34,7 @@ const AppRoutes = () => {
           <Route path="/hostels" element={<Hostels />} />
           <Route path="/hostels/:id/rooms" element={<Rooms />} />
           <Route path="/payments" element={<Payments />} />
+          <Route path="/complaints" element={<Complaints />} />
           <Route path="/reports" element={<Reports />} />
           
           {/* Maintenance Routes */}
