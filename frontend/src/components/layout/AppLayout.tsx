@@ -112,6 +112,7 @@ const AppLayout = () => {
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`
                 }
+                onClick={() => { if (isMobile) setSidebarOpen(false); }}
               >
                 <Icon size={20} className="shrink-0" />
                 {sidebarOpen && <span>{item.name}</span>}
@@ -158,6 +159,7 @@ const AppLayout = () => {
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                           }`
                         }
+                        onClick={() => { if (isMobile) setSidebarOpen(false); }}
                       >
                         <Icon size={16} className="shrink-0" />
                         <span>{item.name}</span>
