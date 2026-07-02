@@ -73,8 +73,16 @@ const Payments = () => {
     return matchesSearch && matchesMonth;
   });
 
-  const paidCount = filteredPayments?.filter((p: any) => p.status === 'PAID').length || 0;
-  const pendingCount = filteredPayments?.filter((p: any) => p.status === 'PENDING').length || 0;
+  const monthFilteredPayments = payments?.filter((p: any) => {
+    if (!selectedMonth) return true;
+    const [yearStr, monthStr] = selectedMonth.split('-');
+    const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+    const monthName = monthNames[parseInt(monthStr) - 1];
+    return p.month.toUpperCase() === monthName && p.year === yearStr;
+  });
+
+  const paidCount = monthFilteredPayments?.filter((p: any) => p.status === 'PAID').length || 0;
+  const pendingCount = monthFilteredPayments?.filter((p: any) => p.status === 'PENDING').length || 0;
 
   return (
     <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)]">
