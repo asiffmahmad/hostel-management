@@ -83,7 +83,7 @@ public class DashboardServiceImpl implements DashboardService {
         // Occupancy Data Dynamic
         List<Map<String, Object>> occupancyData = new ArrayList<>();
         List<Hostel> hostels = hostelId != null 
-                ? hostelRepository.findById(hostelId).filter(h -> !h.isDeleted()).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
+                ? hostelRepository.findById(hostelId).filter(h -> !h.getIsDeleted()).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
                 : hostelRepository.findByIsDeletedFalse();
         for (Hostel h : hostels) {
             Map<String, Object> map = new HashMap<>();
