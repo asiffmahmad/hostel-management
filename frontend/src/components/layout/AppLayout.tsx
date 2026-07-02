@@ -29,9 +29,25 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [maintenanceOpen, setMaintenanceOpen] = useState(
     location.pathname.startsWith('/maintenance')
   );
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -56,12 +72,22 @@ const AppLayout = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <motion.aside
         initial={{ width: 256 }}
-        animate={{ width: sidebarOpen ? 256 : 80 }}
-        className="h-full border-r bg-card flex flex-col transition-all duration-300 z-20 shadow-sm"
+        animate={{ width: sidebarOpen ? 256 : (isMobile ? 0 : 80) }}
+        className={`h-full border-r bg-card flex flex-col transition-all duration-300 z-50 shadow-sm ${
+          isMobile ? 'fixed inset-y-0 left-0' : 'relative shrink-0'
+        } overflow-hidden`}
       >
         <div className="p-4 flex items-center justify-between h-16 border-b shrink-0">
           <div className="flex items-center gap-2 overflow-hidden">
