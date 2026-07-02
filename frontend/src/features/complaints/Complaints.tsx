@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { useHostel } from '@/app/HostelContext';
 import api from '@/services/api';
 import {
   MessageSquareWarning,
@@ -44,16 +52,23 @@ const COMPLAINT_TYPES = [
 export default function Complaints() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { selectedHostelId: globalHostelId } = useHostel();
 
   // Form State
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedHostelId, setSelectedHostelId] = useState('');
+  const [selectedHostelId, setSelectedHostelId] = useState(globalHostelId?.toString() || '');
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [complaintType, setComplaintType] = useState('');
   const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
+
+  // Sync global hostel with local state when global changes, only if no form input yet
+  useEffect(() => {
+    if (globalHostelId && !selectedHostelId) {
+      setSelectedHostelId(globalHostelId.toString());
+    }
+  }, [globalHostelId]);
 
   // Fetch Hostels on Load
   useEffect(() => {
@@ -94,9 +109,11 @@ export default function Complaints() {
 
   // Queries
   const { data: complaints, isLoading } = useQuery<Complaint[]>({
-    queryKey: ['complaints'],
+    queryKey: ['complaints', globalHostelId],
     queryFn: async () => {
-      const { data } = await api.get('/complaints');
+      const { data } = await api.get('/complaints', {
+        params: { hostelId: globalHostelId || undefined }
+      });
       return data;
     },
   });
@@ -114,8 +131,8 @@ export default function Complaints() {
     onSuccess: () => {
       toast({ title: 'Complaint submitted successfully' });
       queryClient.invalidateQueries({ queryKey: ['complaints'] });
-      // Reset Form
-      setSelectedHostelId('');
+      // Reset Form (keep hostel selected if global is active)
+      setSelectedHostelId(globalHostelId?.toString() || '');
       setComplaintType('');
       setDescription('');
     },
@@ -174,7 +191,7 @@ export default function Complaints() {
 
         {/* TAB 1: Give Complaint */}
         <TabsContent value="give">
-          <Card className="max-w-2xl border-primary/20 shadow-sm">
+          <Card className="max-w-2xl border-primary/20 shadow-sm glass-panel bg-card">
             <CardHeader>
               <CardTitle>Submit a New Complaint</CardTitle>
             </CardHeader>
@@ -186,7 +203,7 @@ export default function Complaints() {
                       <Building className="h-3.5 w-3.5" /> Select Hostel
                     </label>
                     <select
-                      className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                      className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
                       value={selectedHostelId}
                       onChange={e => setSelectedHostelId(e.target.value)}
                       required
@@ -201,7 +218,7 @@ export default function Complaints() {
                       <BedDouble className="h-3.5 w-3.5" /> Select Room
                     </label>
                     <select
-                      className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                      className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
                       value={selectedRoomId}
                       onChange={e => setSelectedRoomId(e.target.value)}
                       disabled={!selectedHostelId || loadingRooms}
@@ -218,7 +235,7 @@ export default function Complaints() {
                     <AlertCircle className="h-3.5 w-3.5" /> Complaint Category
                   </label>
                   <select
-                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                    className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
                     value={complaintType}
                     onChange={e => setComplaintType(e.target.value)}
                     required
@@ -241,7 +258,7 @@ export default function Complaints() {
                 <Button 
                   type="submit" 
                   disabled={submitMutation.isPending} 
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto mt-2"
                 >
                   {submitMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Submit Complaint
@@ -253,46 +270,55 @@ export default function Complaints() {
 
         {/* TAB 2: View Complaints */}
         <TabsContent value="view">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Complaints</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-              ) : !complaints || complaints.length === 0 ? (
-                <div className="text-center p-8 text-muted-foreground border rounded-lg bg-muted/20">
-                  No complaints found.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted/50 text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3 font-medium rounded-tl-lg">ID</th>
-                        <th className="px-4 py-3 font-medium">Location</th>
-                        <th className="px-4 py-3 font-medium">Category</th>
-                        <th className="px-4 py-3 font-medium hidden sm:table-cell">Description</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium hidden md:table-cell">Date</th>
-                        <th className="px-4 py-3 font-medium text-right rounded-tr-lg">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {complaints.map(c => (
-                        <tr key={c.id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium text-primary">#{c.id}</td>
-                          <td className="px-4 py-3">
+          <div className="bg-card rounded-xl border shadow-sm flex flex-col h-[calc(100vh-14rem)] glass-panel overflow-hidden">
+            <div className="flex-1 overflow-auto bg-background/50">
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="hidden lg:table-cell">Description</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right pr-6">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Loading complaints...
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : !complaints || complaints.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                          No complaints found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      complaints.map(c => (
+                        <TableRow key={c.id} className="hover:bg-muted/30">
+                          <TableCell className="font-medium text-primary">#{c.id}</TableCell>
+                          <TableCell>
                             <div className="font-semibold">{c.hostelName}</div>
                             <div className="text-xs text-muted-foreground">Room: {c.roomNumber}</div>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <Badge variant="outline">{c.type}</Badge>
-                          </td>
-                          <td className="px-4 py-3 hidden sm:table-cell max-w-[200px] truncate">
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
                             {c.description || '—'}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(c.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
                             <Badge 
                               className={
                                 c.status === 'RESOLVED' 
@@ -302,27 +328,24 @@ export default function Complaints() {
                             >
                               {c.status}
                             </Badge>
-                          </td>
-                          <td className="px-4 py-3 hidden md:table-cell text-muted-foreground text-xs">
-                            {new Date(c.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          </TableCell>
+                          <TableCell className="text-right pr-6">
                             <div className="flex justify-end gap-2">
                               {c.status === 'PENDING' && (
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                  className="text-green-600 border-green-200 hover:bg-green-50 h-8"
                                   onClick={() => resolveMutation.mutate(c.id)}
                                   disabled={resolveMutation.isPending}
                                 >
-                                  <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve
+                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Resolve
                                 </Button>
                               )}
                               <Button 
                                 size="sm" 
                                 variant="ghost"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                                 onClick={() => {
                                   if (window.confirm('Delete this complaint?')) {
                                     deleteMutation.mutate(c.id);
@@ -330,20 +353,95 @@ export default function Complaints() {
                                 }}
                                 disabled={deleteMutation.isPending}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden flex flex-col gap-4 p-4">
+                {isLoading ? (
+                  <div className="text-center text-muted-foreground p-8 flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading complaints...
+                  </div>
+                ) : !complaints || complaints.length === 0 ? (
+                  <div className="text-center text-muted-foreground p-8 border rounded-lg bg-muted/20">
+                    No complaints found.
+                  </div>
+                ) : (
+                  complaints.map(c => (
+                    <div key={c.id} className="bg-card border rounded-xl p-4 shadow-sm flex flex-col gap-3 relative">
+                      <div className="flex items-start justify-between border-b pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="font-mono text-xs">#{c.id}</Badge>
+                            <Badge variant="secondary">{c.type}</Badge>
+                          </div>
+                          <h3 className="font-semibold mt-2">{c.hostelName}</h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">Room {c.roomNumber}</p>
+                        </div>
+                        <Badge 
+                          className={
+                            c.status === 'RESOLVED' 
+                              ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none'
+                              : 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                          }
+                        >
+                          {c.status}
+                        </Badge>
+                      </div>
+                      
+                      {c.description && (
+                        <div className="text-sm bg-muted/30 p-2.5 rounded-md border border-muted/50">
+                          {c.description}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                        <span>Submitted on {new Date(c.createdAt).toLocaleDateString()}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-3 border-t mt-1">
+                        {c.status === 'PENDING' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 h-8 text-xs text-green-600 border-green-200 hover:bg-green-50"
+                            onClick={() => resolveMutation.mutate(c.id)}
+                            disabled={resolveMutation.isPending}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark Resolved
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-[0.3] h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (window.confirm('Delete this complaint?')) {
+                              deleteMutation.mutate(c.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+
