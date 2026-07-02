@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface HostelRepository extends JpaRepository<Hostel, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Hostel> {
     List<Hostel> findByIsDeletedFalse();
+    long countByIsDeletedFalse();
 }

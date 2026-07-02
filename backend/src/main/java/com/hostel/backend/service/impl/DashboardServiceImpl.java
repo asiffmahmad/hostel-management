@@ -27,7 +27,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsDTO getDashboardStats(Long hostelId) {
-        long totalHostels = hostelId != null ? 1 : hostelRepository.count();
+        long totalHostels = hostelId != null ? 1 : hostelRepository.countByIsDeletedFalse();
         
         List<com.hostel.backend.entity.Student> students = hostelId != null 
                 ? studentRepository.findByIsDeletedFalse().stream().filter(s -> s.getBed() != null && s.getBed().getRoom().getHostel().getId().equals(hostelId)).collect(java.util.stream.Collectors.toList())
@@ -83,8 +83,8 @@ public class DashboardServiceImpl implements DashboardService {
         // Occupancy Data Dynamic
         List<Map<String, Object>> occupancyData = new ArrayList<>();
         List<Hostel> hostels = hostelId != null 
-                ? hostelRepository.findById(hostelId).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
-                : hostelRepository.findAll();
+                ? hostelRepository.findById(hostelId).filter(h -> !h.isDeleted()).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
+                : hostelRepository.findByIsDeletedFalse();
         for (Hostel h : hostels) {
             Map<String, Object> map = new HashMap<>();
             int hTotalBeds = bedRepository.countBedsByHostelId(h.getId());
