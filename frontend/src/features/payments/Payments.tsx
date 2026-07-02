@@ -76,7 +76,7 @@ const Payments = () => {
           <h1 className="text-2xl font-bold tracking-tight">Payments & Receipts</h1>
           <p className="text-sm text-muted-foreground mt-1">Track fee collections and financial history.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
           <Button variant="outline" className="gap-2">
             <Download size={16} />
             Export CSV
@@ -92,8 +92,8 @@ const Payments = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 shrink-0">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 shrink-0 w-full">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by Student Name, UTR Number, ID..."
@@ -104,7 +104,7 @@ const Payments = () => {
         </div>
         <Input 
           type="month"
-          className="max-w-[200px]"
+          className="max-w-[200px] w-full sm:w-auto"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
         />
@@ -120,9 +120,9 @@ const Payments = () => {
               <TableHead>Transaction ID</TableHead>
               <TableHead>Student</TableHead>
               <TableHead>UTR Number</TableHead>
-              <TableHead>Period</TableHead>
+              <TableHead className="hidden md:table-cell">Period</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Source</TableHead>
+              <TableHead className="hidden lg:table-cell">Source</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
@@ -150,13 +150,13 @@ const Payments = () => {
                       ? <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{(payment as any).utrNumber}</span>
                       : <span className="text-muted-foreground text-xs">—</span>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <Badge variant="outline" className="text-xs">
                       {payment.month} {payment.year}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-semibold">₹{payment.amount.toFixed(2)}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <Badge variant="outline" className="text-xs capitalize">
                       {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : '✍️ Manual'}
                     </Badge>

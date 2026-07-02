@@ -119,7 +119,7 @@ export default function StudentMapping() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Student Mapping & Transfer</h1>
       </div>
 
@@ -131,8 +131,9 @@ export default function StudentMapping() {
           {students.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">No students found.</div>
           ) : (
-            <Table>
-              <TableHeader>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                 <TableRow>
                   <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
@@ -148,7 +149,7 @@ export default function StudentMapping() {
                     <TableCell>{s.bedId || 'Unassigned'}</TableCell>
                     <TableCell>
                       {transferringId === s.id ? (
-                        <div className="flex gap-2 items-center flex-wrap">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full min-w-[200px]">
                           <select className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedHostelId} onChange={e => setSelectedHostelId(e.target.value)}>
                             <option value="">Select Hostel</option>
                             {hostels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -187,6 +188,7 @@ export default function StudentMapping() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -55,7 +55,7 @@ const Students = () => {
         </div>
       </div>
 
-      <div className="relative max-w-md shrink-0">
+      <div className="relative w-full sm:max-w-md shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name..."
@@ -71,8 +71,8 @@ const Students = () => {
             <TableRow>
               <TableHead>Student</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Rent</TableHead>
-              <TableHead>Address</TableHead>
+              <TableHead className="hidden sm:table-cell">Rent</TableHead>
+              <TableHead className="hidden md:table-cell">Address</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -121,10 +121,10 @@ const Students = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="font-medium">₹{student.monthlyRent?.toLocaleString('en-IN') || '0'}</div>
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                  <TableCell className="hidden md:table-cell max-w-[200px] truncate text-muted-foreground">
                     {student.address || 'N/A'}
                   </TableCell>
                   <TableCell>

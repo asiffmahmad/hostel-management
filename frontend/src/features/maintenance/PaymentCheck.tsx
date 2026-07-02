@@ -237,8 +237,8 @@ export default function PaymentCheck() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/10 text-primary p-2 rounded-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="bg-primary/10 text-primary p-2 rounded-lg self-start sm:self-auto">
           <ClipboardCheck className="h-6 w-6" />
         </div>
         <div>
@@ -505,7 +505,7 @@ export default function PaymentCheck() {
                   <Users className="h-4 w-4 text-primary" />
                   {selectedStudent.name}
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground">Monthly Rent</p>
                     <p className="font-semibold flex items-center gap-0.5">
@@ -547,7 +547,7 @@ export default function PaymentCheck() {
             )}
 
             {/* Confirm Button */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={handleConfirmPayment}
                 disabled={!selectedStudentId || confirming}
