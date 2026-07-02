@@ -2,6 +2,8 @@ package com.hostel.backend.service.impl;
 
 import com.hostel.backend.dto.DashboardStatsDTO;
 import com.hostel.backend.entity.Hostel;
+import com.hostel.backend.entity.Payment;
+import com.hostel.backend.entity.Student;
 import com.hostel.backend.enums.BedStatus;
 import com.hostel.backend.enums.HostelStatus;
 import com.hostel.backend.repository.BedRepository;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,64 +31,53 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsDTO getDashboardStats(Long hostelId) {
-        long totalHostels = hostelId != null ? 1 : hostelRepository.findByIsDeletedFalse().stream().filter(h -> HostelStatus.ACTIVE.equals(h.getStatus())).count();
+        long totalHostels = hostelId != null ? 1 : hostelRepository.countByIsDeletedFalse();
         
-        List<com.hostel.backend.entity.Student> students = hostelId != null 
-                ? studentRepository.findByIsDeletedFalse().stream().filter(s -> s.getBed() != null && s.getBed().getRoom().getHostel().getId().equals(hostelId)).collect(java.util.stream.Collectors.toList())
-                : studentRepository.findByIsDeletedFalse();
+        long totalStudents = hostelId != null 
+                ? studentRepository.countByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                : studentRepository.countByIsDeletedFalse();
                 
-        long totalStudents = students.size();
-        long occupiedStudents = students.stream()
-                .filter(s -> "ACTIVE".equals(s.getStatus()) && s.getBed() != null)
-                .count();
+        long occupiedStudents = hostelId != null
+                ? studentRepository.countByBedRoomHostelIdAndStatusAndBedIsNotNullAndIsDeletedFalse(hostelId, "ACTIVE")
+                : studentRepository.countByStatusAndBedIsNotNullAndIsDeletedFalse("ACTIVE");
         
-        // Calculate overall occupancy dynamically
-        List<com.hostel.backend.entity.Bed> beds = hostelId != null
-                ? bedRepository.findByRoomHostelIdAndIsDeletedFalse(hostelId)
-                : bedRepository.findByIsDeletedFalse();
+        long totalBeds = hostelId != null
+                ? bedRepository.countBedsByHostelId(hostelId)
+                : bedRepository.findByIsDeletedFalse().size(); // Or use a direct count method if added
                 
-        long totalBeds = beds.size();
-        long occupiedBeds = beds.stream()
-                            .filter(b -> b.getStatus() == BedStatus.OCCUPIED).count();
+        long occupiedBeds = hostelId != null
+                ? bedRepository.countBedsByHostelIdAndStatus(hostelId, BedStatus.OCCUPIED)
+                : bedRepository.findByIsDeletedFalse().stream().filter(b -> b.getStatus() == BedStatus.OCCUPIED).count();
         
         double occupancyRate = 0;
         if (totalBeds > 0) {
             occupancyRate = (double) occupiedBeds / totalBeds * 100;
         }
 
-        List<com.hostel.backend.entity.Payment> payments = hostelId != null
-                ? paymentRepository.findAll().stream().filter(p -> p.getStudent().getBed() != null && p.getStudent().getBed().getRoom().getHostel().getId().equals(hostelId)).collect(java.util.stream.Collectors.toList())
-                : paymentRepository.findAll();
+        Double monthlyRevenue = hostelId != null
+                ? paymentRepository.sumAmountByHostelIdAndStatus(hostelId, "PAID")
+                : paymentRepository.sumAmountByStatus("PAID");
+        if (monthlyRevenue == null) monthlyRevenue = 0.0;
 
-        double monthlyRevenue = payments.stream()
-                .filter(p -> "PAID".equals(p.getStatus()))
-                .mapToDouble(com.hostel.backend.entity.Payment::getAmount)
-                .sum();
-
-        // Dynamic Revenue Data
+        // Dynamic Revenue Data via JPQL
+        List<Object[]> rawRevenueData = hostelId != null
+                ? paymentRepository.getRevenueDataByHostelId(hostelId)
+                : paymentRepository.getRevenueData();
+                
         List<Map<String, Object>> revenueData = new ArrayList<>();
-        payments.stream()
-            .filter(p -> "PAID".equals(p.getStatus()))
-            .forEach(p -> {
-                String monthKey = p.getMonth() + " " + p.getYear();
-                Map<String, Object> map = revenueData.stream()
-                        .filter(m -> m.get("name").equals(monthKey))
-                        .findFirst()
-                        .orElseGet(() -> {
-                            Map<String, Object> newMap = new HashMap<>();
-                            newMap.put("name", monthKey);
-                            newMap.put("total", 0.0);
-                            revenueData.add(newMap);
-                            return newMap;
-                        });
-                map.put("total", (Double) map.get("total") + p.getAmount());
-            });
+        for (Object[] row : rawRevenueData) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", row[0] + " " + row[1]); // Month Year
+            map.put("total", row[2]); // Sum
+            revenueData.add(map);
+        }
 
         // Occupancy Data Dynamic
         List<Map<String, Object>> occupancyData = new ArrayList<>();
         List<Hostel> hostels = hostelId != null 
                 ? hostelRepository.findById(hostelId).filter(h -> !h.getIsDeleted() && HostelStatus.ACTIVE.equals(h.getStatus())).map(java.util.Collections::singletonList).orElse(new ArrayList<>())
-                : hostelRepository.findByIsDeletedFalse().stream().filter(h -> HostelStatus.ACTIVE.equals(h.getStatus())).collect(java.util.stream.Collectors.toList());
+                : hostelRepository.findByIsDeletedFalse().stream().filter(h -> HostelStatus.ACTIVE.equals(h.getStatus())).collect(Collectors.toList());
+        
         for (Hostel h : hostels) {
             Map<String, Object> map = new HashMap<>();
             int hTotalBeds = bedRepository.countBedsByHostelId(h.getId());
@@ -96,10 +88,12 @@ public class DashboardServiceImpl implements DashboardService {
             occupancyData.add(map);
         }
 
-        // Recent Admissions
-        List<Map<String, Object>> recentAdmissions = students.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .limit(5)
+        // Recent Admissions via DB Top 5
+        List<Student> topStudents = hostelId != null
+                ? studentRepository.findTop5ByBedRoomHostelIdAndIsDeletedFalseOrderByCreatedAtDesc(hostelId)
+                : studentRepository.findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
+                
+        List<Map<String, Object>> recentAdmissions = topStudents.stream()
                 .map(s -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", s.getName());
@@ -107,12 +101,14 @@ public class DashboardServiceImpl implements DashboardService {
                     map.put("hostel", s.getBed() != null ? s.getBed().getRoom().getHostel().getName() : "Unassigned");
                     map.put("room", s.getBed() != null ? s.getBed().getRoom().getRoomNumber() : "N/A");
                     return map;
-                }).collect(java.util.stream.Collectors.toList());
+                }).collect(Collectors.toList());
 
-        // Recent Activities (Payments)
-        List<Map<String, Object>> recentActivities = payments.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .limit(5)
+        // Recent Activities via DB Top 5
+        List<Payment> topPayments = hostelId != null
+                ? paymentRepository.findTop5ByStudentBedRoomHostelIdOrderByCreatedAtDesc(hostelId)
+                : paymentRepository.findTop5ByOrderByCreatedAtDesc();
+                
+        List<Map<String, Object>> recentActivities = topPayments.stream()
                 .map(p -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("type", "Payment");
@@ -121,7 +117,7 @@ public class DashboardServiceImpl implements DashboardService {
                     map.put("date", p.getCreatedAt());
                     map.put("status", p.getStatus());
                     return map;
-                }).collect(java.util.stream.Collectors.toList());
+                }).collect(Collectors.toList());
 
         return DashboardStatsDTO.builder()
                 .totalHostels(totalHostels)

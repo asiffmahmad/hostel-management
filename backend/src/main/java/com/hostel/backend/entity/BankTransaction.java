@@ -8,7 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "hostel_bank_transaction")
+@Table(name = "hostel_bank_transaction", indexes = {
+    @Index(name = "idx_bt_utr_number", columnList = "utr_number"),
+    @Index(name = "idx_bt_month_year", columnList = "month, year"),
+    @Index(name = "idx_bt_is_deleted", columnList = "is_deleted")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
