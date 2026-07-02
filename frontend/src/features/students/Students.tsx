@@ -112,6 +112,13 @@ const Students = () => {
                         <Mail size={14} />
                         {student.email || 'N/A'}
                       </div>
+                      <div className="flex items-center gap-2 text-muted-foreground mt-1 pt-1 border-t border-muted/50">
+                        <span className="text-[10px] font-semibold uppercase">Parent:</span>
+                        <Phone size={12} />
+                        <span className="text-xs">
+                          {student.fatherPhone || student.motherPhone || student.guardianPhone || student.parentPhone || 'N/A'}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

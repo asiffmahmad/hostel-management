@@ -145,16 +145,16 @@ export default function HostelExplorer() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Hostel Explorer</h1>
-        <p className="text-muted-foreground">View hostels, rooms, beds and occupants</p>
+        <p className="text-muted-foreground text-sm bg-muted/30 px-3 py-1 rounded-full w-fit">View hostels, rooms, beds and occupants</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {hostels.map((hostel, hIdx) => (
-          <Card key={hostel.id} className="overflow-hidden">
+          <Card key={hostel.id} className="overflow-hidden border-border/50 shadow-sm hover:shadow transition-all duration-300">
             <div 
-              className="p-4 bg-muted/30 hover:bg-muted/50 cursor-pointer flex items-center justify-between transition-colors"
+              className="p-5 bg-gradient-to-r from-card to-muted/20 hover:from-muted/20 hover:to-muted/30 cursor-pointer flex items-center justify-between transition-all"
               onClick={() => toggleHostel(hIdx)}
             >
               <div className="flex items-center gap-3">
@@ -171,11 +171,11 @@ export default function HostelExplorer() {
                 ) : hostel.rooms?.length === 0 ? (
                   <p className="text-muted-foreground p-4">No rooms found in this hostel.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {hostel.rooms?.map((room, rIdx) => (
-                      <div key={room.id} className="border rounded-lg overflow-hidden">
+                  <div className="space-y-4">
+                    {hostels[hIdx].rooms?.map((room, rIdx) => (
+                      <div key={room.id} className="border border-border/50 rounded-xl overflow-hidden shadow-sm hover:shadow transition-shadow">
                         <div 
-                          className="p-3 bg-muted/20 hover:bg-muted/40 cursor-pointer flex items-center justify-between transition-colors"
+                          className="p-4 bg-card hover:bg-muted/30 cursor-pointer flex items-center justify-between transition-colors"
                           onClick={() => toggleRoom(hIdx, rIdx)}
                         >
                           <div className="flex items-center gap-2">
@@ -192,10 +192,10 @@ export default function HostelExplorer() {
                             ) : room.beds?.length === 0 ? (
                               <p className="text-sm text-muted-foreground">No beds mapped to this room.</p>
                             ) : (
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {room.beds?.map(bed => (
-                                  <Card key={bed.id} className={`overflow-hidden border-l-4 ${bed.status === 'OCCUPIED' ? 'border-l-primary' : 'border-l-muted'}`}>
-                                    <div className="p-3 bg-muted/10 border-b flex justify-between items-center">
+                                  <Card key={bed.id} className={`overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md border-l-[6px] ${bed.status === 'OCCUPIED' ? 'border-l-primary/80 bg-card' : 'border-l-muted-foreground/30 bg-muted/10'}`}>
+                                    <div className="p-3 bg-background/50 border-b flex justify-between items-center backdrop-blur-sm">
                                       <div className="flex items-center gap-2">
                                         <BedDouble size={16} className="text-muted-foreground" />
                                         <span className="font-medium">{bed.bedNumber}</span>

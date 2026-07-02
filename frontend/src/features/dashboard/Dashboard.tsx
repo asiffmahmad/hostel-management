@@ -71,8 +71,6 @@ const Dashboard = () => {
               <option key={h.id} value={h.id}>{h.name}</option>
             ))}
           </select>
-          <Button variant="outline">Download Report</Button>
-          <Button>Quick Admit</Button>
         </div>
       </div>
 
