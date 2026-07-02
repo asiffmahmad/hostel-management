@@ -12,6 +12,14 @@ WORKDIR /app
 # Copy the built jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
+# Create a non-root user and group
+RUN addgroup --system --gid 1001 appgroup && adduser --system --uid 1001 --ingroup appgroup appuser
+# Change ownership of the app.jar to the non-root user
+RUN chown appuser:appgroup app.jar
+
+# Switch to the non-root user
+USER appuser
+
 # Expose port (Render sets PORT environment variable, defaulting to 8080)
 ENV PORT=8080
 EXPOSE $PORT

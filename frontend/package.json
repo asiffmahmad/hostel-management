@@ -26,6 +26,7 @@
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.1",
     "lucide-react": "^1.22.0",
+    "mysql2": "^3.22.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.80.0",

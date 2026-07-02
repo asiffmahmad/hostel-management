@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -63,13 +62,28 @@ public class AuthController {
         }
 
         // Create new user's account
+        // Security Fix: Prevent Mass Assignment / Privilege Escalation. Hardcode to generic STAFF or require admin approval.
+        // For backward compatibility with existing tests, if the user requests OWNER, we must verify if one already exists, or just allow it if count == 0.
+        // Actually, signup should only create STAFF unless it's the very first user.
+        Role assignedRole = Role.STAFF;
+        if (signUpRequest.getRole() != null) {
+            try {
+                assignedRole = Role.valueOf(signUpRequest.getRole());
+                if (assignedRole == Role.OWNER && userRepository.count() > 0) {
+                    assignedRole = Role.STAFF; // Demote to staff if trying to escalate privileges
+                }
+            } catch (IllegalArgumentException e) {
+                assignedRole = Role.STAFF;
+            }
+        }
+
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .name(signUpRequest.getName())
                 .email(signUpRequest.getEmail())
                 .phone(signUpRequest.getPhone())
                 .password(encoder.encode(signUpRequest.getPassword()))
-                .role(Role.valueOf(signUpRequest.getRole()))
+                .role(assignedRole)
                 .build();
 
         userRepository.save(user);

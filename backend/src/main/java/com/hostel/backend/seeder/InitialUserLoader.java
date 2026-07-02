@@ -14,6 +14,9 @@ public class InitialUserLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${app.default.admin.password:Owner@123}")
+    private String defaultPassword;
+
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
@@ -21,8 +24,8 @@ public class InitialUserLoader implements CommandLineRunner {
                     .username("owner")
                     .name("System Owner")
                     .email("owner@hostel.com")
-                    .phone("9876543210")
-                    .password(passwordEncoder.encode("Owner@123"))
+                    .phone("1234567890")
+                    .password(passwordEncoder.encode(defaultPassword))
                     .role(Role.OWNER)
                     .build();
             userRepository.save(owner);
