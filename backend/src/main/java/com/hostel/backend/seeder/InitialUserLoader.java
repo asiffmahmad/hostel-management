@@ -19,7 +19,8 @@ public class InitialUserLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
+        // Ensure owner exists
+        if (userRepository.findByUsername("owner").isEmpty()) {
             User owner = User.builder()
                     .username("owner")
                     .name("System Owner")
@@ -30,5 +31,23 @@ public class InitialUserLoader implements CommandLineRunner {
                     .build();
             userRepository.save(owner);
         }
+
+        // Ensure admin exists with correct password
+        userRepository.findByUsername("admin").ifPresentOrElse(admin -> {
+            // Update existing admin's password to Admin@123 since the SQL script had a bad hash
+            admin.setPassword(passwordEncoder.encode("Admin@123"));
+            admin.setRole(Role.ADMIN);
+            userRepository.save(admin);
+        }, () -> {
+            User admin = User.builder()
+                    .username("admin")
+                    .name("System Admin")
+                    .email("admin@hostel.com")
+                    .phone("0987654321")
+                    .password(passwordEncoder.encode("Admin@123"))
+                    .role(Role.ADMIN)
+                    .build();
+            userRepository.save(admin);
+        });
     }
 }

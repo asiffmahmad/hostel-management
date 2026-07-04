@@ -46,6 +46,7 @@ interface BankTransactionGridProps {
   loading: boolean;
   onViewDetails: (transaction: BankTransaction) => void;
   onMapPayment: (transaction: BankTransaction) => void;
+  onUnmapPayment: (id: number) => void;
   onDelete: (id: number) => void;
   pagination: { pageIndex: number; pageSize: number };
   setPagination: (pagination: { pageIndex: number; pageSize: number }) => void;
@@ -57,7 +58,7 @@ interface BankTransactionGridProps {
 }
 
 export function BankTransactionGrid({
-  data, loading, onViewDetails, onMapPayment, onDelete,
+  data, loading, onViewDetails, onMapPayment, onUnmapPayment, onDelete,
   pagination, setPagination, pageCount, globalFilter, setGlobalFilter,
   sorting, setSorting
 }: BankTransactionGridProps) {
@@ -173,9 +174,14 @@ export function BankTransactionGrid({
                 <Link2 className="h-4 w-4 text-blue-500 hover:text-blue-600" />
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-blue-500 hover:text-blue-600" onClick={() => onViewDetails(txn)}>
-                View Mapping
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-blue-500 hover:text-blue-600" onClick={() => onViewDetails(txn)}>
+                  View Mapping
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30" onClick={() => onUnmapPayment(txn.id)} title="Remove Mapping">
+                  Unmap
+                </Button>
+              </div>
             )}
             {!txn.isMapped && (
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => onDelete(txn.id)}>

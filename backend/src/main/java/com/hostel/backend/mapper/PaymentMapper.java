@@ -20,6 +20,8 @@ public class PaymentMapper {
         }
 
         dto.setAmount(entity.getAmount());
+        dto.setExpectedAmount(entity.getExpectedAmount());
+        dto.setDueAmount(entity.getDueAmount());
         dto.setMonth(entity.getMonth());
         dto.setYear(entity.getYear());
         dto.setStatus(entity.getStatus());
@@ -47,7 +49,9 @@ public class PaymentMapper {
             entity.setStudent(student);
         }
 
-        entity.setAmount(dto.getAmount());
+        entity.setAmount(dto.getAmount() != null ? dto.getAmount() : 0.0);
+        entity.setExpectedAmount(dto.getExpectedAmount() != null ? dto.getExpectedAmount() : 0.0);
+        entity.setDueAmount(dto.getDueAmount() != null ? dto.getDueAmount() : 0.0);
         entity.setMonth(dto.getMonth());
         entity.setYear(dto.getYear());
         entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "PENDING");

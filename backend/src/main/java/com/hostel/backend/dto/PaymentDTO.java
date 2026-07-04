@@ -18,7 +18,10 @@ public class PaymentDTO {
     private String studentName;
 
     @NotNull
-    private Double amount;
+    private Double amount; // Acts as amountPaid
+
+    private Double expectedAmount;
+    private Double dueAmount;
 
     @NotBlank
     private String month;

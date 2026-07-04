@@ -17,13 +17,17 @@ const Rooms = lazy(() => import('@/features/hostels/Rooms'));
 const Students = lazy(() => import('@/features/students/Students'));
 const Payments = lazy(() => import('@/features/payments/Payments'));
 const Reports = lazy(() => import('@/features/reports/Reports'));
-const Complaints = lazy(() => import('@/features/complaints/Complaints'));
+const FinancialDashboard = lazy(() => import('@/features/reports/FinancialDashboard'));
+const GiveComplaints = lazy(() => import('@/features/complaints/GiveComplaints'));
+const ViewComplaints = lazy(() => import('@/features/complaints/ViewComplaints'));
 const SystemSettings = lazy(() => import('@/features/maintenance/SystemSettings'));
 const RoomMgmt = lazy(() => import('@/features/maintenance/RoomMgmt'));
 const BedMgmt = lazy(() => import('@/features/maintenance/BedMgmt'));
 const StudentMapping = lazy(() => import('@/features/maintenance/StudentMapping'));
 const PaymentCheck = lazy(() => import('@/features/maintenance/PaymentCheck'));
 const ExpensesDashboard = lazy(() => import('@/features/expenses/ExpensesDashboard'));
+const MenuSettings = lazy(() => import('@/features/maintenance/MenuSettings'));
+const SearchTransactions = lazy(() => import('@/features/maintenance/SearchTransactions'));
 
 // Error Pages
 const NotFound = () => <div className="flex items-center justify-center h-screen text-2xl font-semibold">404 - Page Not Found</div>;
@@ -52,8 +56,10 @@ const AppRoutes = () => {
             <Route path="/hostels" element={<Hostels />} />
             <Route path="/hostels/:id/rooms" element={<Rooms />} />
             <Route path="/payments" element={<Payments />} />
-            <Route path="/complaints" element={<Complaints />} />
+            <Route path="/complaints/give" element={<GiveComplaints />} />
+            <Route path="/complaints/view" element={<ViewComplaints />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/reports/financial" element={<FinancialDashboard />} />
             <Route path="/expenses" element={<ExpensesDashboard />} />
             
             {/* Maintenance Routes */}
@@ -61,8 +67,10 @@ const AppRoutes = () => {
             <Route path="/maintenance/rooms" element={<RoomMgmt />} />
             <Route path="/maintenance/beds" element={<BedMgmt />} />
             <Route path="/maintenance/mapping" element={<StudentMapping />} />
+            <Route path="/maintenance/search-transactions" element={<SearchTransactions />} />
             <Route path="/maintenance/payment-check" element={<PaymentCheck />} />
             <Route path="/maintenance/settings" element={<SystemSettings />} />
+            <Route path="/maintenance/menu-settings" element={<MenuSettings />} />
             
             {/* Admin Admissions Route */}
             <Route path="/admin/admissions" element={<AdminAdmissions />} />

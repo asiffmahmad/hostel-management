@@ -24,7 +24,16 @@ public class Payment extends BaseEntity {
     private Student student;
 
     @Column(nullable = false)
-    private Double amount;
+    @Builder.Default
+    private Double amount = 0.0; // Acts as amountPaid
+
+    @Column(name = "expected_amount", nullable = false)
+    @Builder.Default
+    private Double expectedAmount = 0.0;
+
+    @Column(name = "due_amount", nullable = false)
+    @Builder.Default
+    private Double dueAmount = 0.0;
 
     @Column(nullable = false)
     private String month;

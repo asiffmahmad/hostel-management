@@ -21,4 +21,12 @@ public class DashboardController {
     public ResponseEntity<DashboardStatsDTO> getStats(@org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) {
         return ResponseEntity.ok(dashboardService.getDashboardStats(hostelId));
     }
+
+    @GetMapping("/financial")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<com.hostel.backend.dto.FinancialReportDTO> getFinancialReport(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "6") int months,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) {
+        return ResponseEntity.ok(dashboardService.getFinancialReport(months, hostelId));
+    }
 }

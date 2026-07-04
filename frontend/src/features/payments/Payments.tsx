@@ -82,7 +82,7 @@ const Payments = () => {
   });
 
   const paidCount = monthFilteredPayments?.filter((p: any) => p.status === 'PAID').length || 0;
-  const pendingCount = monthFilteredPayments?.filter((p: any) => p.status === 'PENDING').length || 0;
+  const pendingCount = monthFilteredPayments?.filter((p: any) => p.status === 'PENDING' || p.status === 'PENDING DUE').length || 0;
 
   return (
     <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)]">
@@ -146,7 +146,8 @@ const Payments = () => {
                 <TableHead>Student</TableHead>
                 <TableHead>UTR Number</TableHead>
                 <TableHead className="hidden md:table-cell">Period</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Amount Paid</TableHead>
+                <TableHead>Due Amount</TableHead>
                 <TableHead className="hidden lg:table-cell">Source</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[100px]"></TableHead>
@@ -180,7 +181,10 @@ const Payments = () => {
                         {payment.month} {payment.year}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold">₹{payment.amount.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">₹{(payment.amount || 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-orange-600">
+                      {(payment as any).dueAmount !== undefined ? `₹${(payment as any).dueAmount.toFixed(2)}` : '—'}
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline" className="text-xs capitalize">
                         {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : '✍️ Manual'}
@@ -188,11 +192,11 @@ const Payments = () => {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={payment.status === 'PAID' ? 'default' : payment.status === 'PENDING' ? 'secondary' : 'destructive'}
+                        variant={payment.status === 'PAID' ? 'default' : payment.status?.startsWith('PENDING') ? 'secondary' : 'destructive'}
                         className={
                           payment.status === 'PAID' 
                             ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                            : payment.status === 'PENDING'
+                            : payment.status?.startsWith('PENDING')
                               ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
                               : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                         }
@@ -238,11 +242,11 @@ const Payments = () => {
                     <p className="text-xs font-mono text-primary mt-1">PAY-{payment.id}</p>
                   </div>
                   <Badge
-                    variant={payment.status === 'PAID' ? 'default' : payment.status === 'PENDING' ? 'secondary' : 'destructive'}
+                    variant={payment.status === 'PAID' ? 'default' : payment.status?.startsWith('PENDING') ? 'secondary' : 'destructive'}
                     className={
                       payment.status === 'PAID' 
                         ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                        : payment.status === 'PENDING'
+                        : payment.status?.startsWith('PENDING')
                           ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
                           : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                     }
@@ -253,8 +257,12 @@ const Payments = () => {
                 
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
                   <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Amount</span>
-                    <span className="font-semibold">₹{payment.amount.toFixed(2)}</span>
+                    <span className="text-xs text-muted-foreground">Amount Paid</span>
+                    <span className="font-semibold">₹{(payment.amount || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Due Amount</span>
+                    <span className="font-semibold text-orange-600">{(payment as any).dueAmount !== undefined ? `₹${(payment as any).dueAmount.toFixed(2)}` : '—'}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Period</span>

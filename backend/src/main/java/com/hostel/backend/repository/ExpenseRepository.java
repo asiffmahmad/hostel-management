@@ -2,6 +2,7 @@ package com.hostel.backend.repository;
 
 import com.hostel.backend.entity.Expense;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,4 +11,13 @@ import java.util.List;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByHostelIdAndIsDeletedFalse(Long hostelId);
     List<Expense> findByIsDeletedFalse();
+
+    @Query("SELECT MONTHNAME(e.expenseDate) as month, YEAR(e.expenseDate) as year, SUM(e.amount) as total " +
+           "FROM Expense e WHERE e.isDeleted = false GROUP BY YEAR(e.expenseDate), MONTHNAME(e.expenseDate)")
+    List<Object[]> getExpenseData();
+
+    @Query("SELECT MONTHNAME(e.expenseDate) as month, YEAR(e.expenseDate) as year, SUM(e.amount) as total " +
+           "FROM Expense e WHERE e.isDeleted = false AND e.hostel.id = :hostelId " +
+           "GROUP BY YEAR(e.expenseDate), MONTHNAME(e.expenseDate)")
+    List<Object[]> getExpenseDataByHostelId(@org.springframework.data.repository.query.Param("hostelId") Long hostelId);
 }

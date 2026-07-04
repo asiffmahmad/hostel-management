@@ -34,17 +34,21 @@ interface Room { id: number; roomNumber: string; }
 interface Student { id: number; name: string; bedId?: number; monthlyRent?: number; status?: string; advanceDeposit?: number; }
 interface Payment { id: number; month: string; year: string; status: string; amount: number; }
 
-const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
-                 'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 
 export default function PaymentCheck() {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-
-  // Import state
-  const [importMonth, setImportMonth] = useState(MONTHS[new Date().getMonth()]);
-  const [importYear, setImportYear] = useState(String(new Date().getFullYear()));
+  
+  const [phonePeFile, setPhonePeFile] = useState<File | null>(null);
+  const [gpayFile, setGpayFile] = useState<File | null>(null);
+  
+  const phonePeRef = useRef<HTMLInputElement>(null);
+  const gpayRef = useRef<HTMLInputElement>(null);
+  
   const [importing, setImporting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   // Search state
@@ -138,27 +142,88 @@ export default function PaymentCheck() {
 
   // ── Import ──────────────────────────────────────────────────────────────
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
+  const handleImportSubmit = async () => {
+    if (!phonePeFile && !gpayFile) {
+      toast({ title: 'Please select at least one file to import.', variant: 'destructive' });
+      return;
+    }
 
     try {
       setImporting(true);
-      const { data } = await api.post(
-        `/bank/upload?month=${importMonth}&year=${importYear}`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      setImportResult(data);
-      toast({ title: `✅ Import complete: ${data.creditsImported} credits imported` });
+      setUploadProgress(0);
+      setUploadStatus('Starting concurrent bulk import...');
+      setImportResult(null);
+
+      let totalCredits = 0;
+      let totalRows = 0;
+      let totalDebits = 0;
+      let totalDuplicates = 0;
+      let totalErrors = 0;
+
+      const filesToUpload = [];
+      if (gpayFile) filesToUpload.push({ file: gpayFile, provider: 'GPAY' });
+      if (phonePeFile) filesToUpload.push({ file: phonePeFile, provider: 'PHONEPE' });
+
+      const totalFiles = filesToUpload.length;
+      if (totalFiles === 0) return;
+
+      const progresses = Array(totalFiles).fill(0);
+
+      const uploadPromises = filesToUpload.map(async ({ file, provider }, index) => {
+        setUploadStatus(`Uploading ${totalFiles} files concurrently...`);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const providerParam = provider ? `&provider=${provider}` : '';
+        const { data } = await api.post(
+          `/bank/upload?mode=APPEND${providerParam}`,
+          formData,
+          { 
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                progresses[index] = (progressEvent.loaded / progressEvent.total) * 100;
+                const overallProgress = progresses.reduce((a, b) => a + b, 0) / totalFiles;
+                setUploadProgress(Math.round(overallProgress));
+                if (progresses.every(p => p === 100)) {
+                  setUploadStatus('Processing all files (Extracting details)...');
+                }
+              }
+            }
+          }
+        );
+        totalCredits += data.creditsImported;
+        totalRows += data.totalRowsRead;
+        totalDebits += data.debitsSkipped;
+        totalDuplicates += data.duplicatesSkipped;
+        totalErrors += data.errors;
+      });
+
+      await Promise.all(uploadPromises);
+
+      setImportResult({
+         bankName: 'Multiple Files',
+         totalRowsRead: totalRows,
+         creditsImported: totalCredits,
+         debitsSkipped: totalDebits,
+         duplicatesSkipped: totalDuplicates,
+         errors: totalErrors,
+         message: 'Bulk import completed',
+         accountNumber: ''
+      } as any);
+
+      toast({ title: `✅ Import complete: ${totalCredits} credits added/updated` });
     } catch (err: any) {
       toast({ title: 'Import failed: ' + (err.response?.data?.message || err.message), variant: 'destructive' });
     } finally {
       setImporting(false);
-      if (fileRef.current) fileRef.current.value = '';
+      setUploadProgress(0);
+      setUploadStatus('');
+      setPhonePeFile(null);
+      setGpayFile(null);
+      if (phonePeRef.current) phonePeRef.current.value = '';
+      if (gpayRef.current) gpayRef.current.value = '';
     }
   };
 
@@ -198,7 +263,7 @@ export default function PaymentCheck() {
     const pendingPayment = studentPayments.find(p =>
       p.month.toUpperCase() === currentMonth.toUpperCase() &&
       p.year === currentYear &&
-      p.status === 'PENDING'
+      p.status?.startsWith('PENDING')
     );
 
     try {
@@ -228,7 +293,7 @@ export default function PaymentCheck() {
     ? studentPayments.filter(p =>
         p.month.toUpperCase() === selectedTxn.month.toUpperCase() &&
         p.year === selectedTxn.year &&
-        p.status === 'PENDING')
+        p.status?.startsWith('PENDING'))
     : [];
 
   const currentYear = new Date().getFullYear();
@@ -243,14 +308,14 @@ export default function PaymentCheck() {
         </div>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Payment Check</h1>
-          <p className="text-muted-foreground text-sm">Upload bank statement → Search UTR → Map to student</p>
+          <p className="text-muted-foreground text-sm">Upload bank statement and view all imported transactions</p>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="import" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="import">Import & Mapping</TabsTrigger>
+          <TabsTrigger value="import">Import Statement</TabsTrigger>
           <TabsTrigger value="grid">Bank Transactions</TabsTrigger>
         </TabsList>
 
@@ -260,312 +325,98 @@ export default function PaymentCheck() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <FileUp className="h-5 w-5 text-primary" />
-            Import Bank Statement
+            Bulk Import Statements
           </CardTitle>
-          <CardDescription>Upload Axis Bank XLS statement. Existing records for the selected month will be replaced.</CardDescription>
+          <CardDescription>Upload PhonePe (PDF) and GPay (PDF) statements all at once. Existing transactions with the same UTR will be safely updated.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4 items-end">
-            {/* Month */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Month</label>
-              <select
-                className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                value={importMonth}
-                onChange={e => setImportMonth(e.target.value)}
-              >
-                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            {/* Year */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Year</label>
-              <select
-                className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                value={importYear}
-                onChange={e => setImportYear(e.target.value)}
-              >
-                {years.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            {/* Upload */}
-            <div>
+          {/* File Selection Row */}
+          <div className="flex flex-wrap gap-4 mt-2">
+            {/* GPay File */}
+            <div className="flex-1 min-w-[250px] space-y-2 border rounded-md p-3">
+              <label className="text-sm font-medium block">Google Pay (PDF)</label>
               <input
-                ref={fileRef}
+                ref={gpayRef}
                 type="file"
-                accept=".xls,.xlsx"
+                accept=".pdf"
                 className="hidden"
-                onChange={handleUpload}
+                onChange={e => e.target.files && setGpayFile(e.target.files[0])}
               />
               <Button
-                onClick={() => fileRef.current?.click()}
-                disabled={importing}
-                className="gap-2"
+                onClick={() => gpayRef.current?.click()}
+                variant="outline"
+                className="w-full text-xs h-8"
               >
-                {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {importing ? 'Importing…' : 'Upload Statement (.xls)'}
+                {gpayFile ? gpayFile.name : 'Select GPay File'}
+              </Button>
+            </div>
+
+            {/* PhonePe File */}
+            <div className="flex-1 min-w-[250px] space-y-2 border rounded-md p-3">
+              <label className="text-sm font-medium block">PhonePe (PDF)</label>
+              <input
+                ref={phonePeRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={e => e.target.files && setPhonePeFile(e.target.files[0])}
+              />
+              <Button
+                onClick={() => phonePeRef.current?.click()}
+                variant="outline"
+                className="w-full text-xs h-8"
+              >
+                {phonePeFile ? phonePeFile.name : 'Select PhonePe File'}
               </Button>
             </div>
           </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              onClick={handleImportSubmit}
+              disabled={importing || (!gpayFile && !phonePeFile)}
+              className="gap-2 bg-primary text-primary-foreground min-w-[150px]"
+            >
+              {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
+              {importing ? 'Importing…' : 'Start Bulk Import'}
+            </Button>
+          </div>
+
+          {/* Progress Bar */}
+          {importing && (
+            <div className="mt-6 space-y-2 rounded-md bg-secondary/50 p-4 border border-secondary">
+              <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                <span>{uploadStatus}</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="h-2 w-full bg-secondary rounded-full overflow-hidden shadow-inner">
+                <div 
+                  className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Import Result */}
-          {importResult && (
-            <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                { label: 'Rows Read', value: importResult.totalRowsRead, color: 'bg-blue-50 dark:bg-blue-950 border-blue-200' },
-                { label: 'Credits Imported', value: importResult.creditsImported, color: 'bg-green-50 dark:bg-green-950 border-green-200' },
-                { label: 'Debits Skipped', value: importResult.debitsSkipped, color: 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200' },
-                { label: 'Duplicates', value: importResult.duplicatesSkipped, color: 'bg-orange-50 dark:bg-orange-950 border-orange-200' },
-                { label: 'Errors', value: importResult.errors, color: 'bg-red-50 dark:bg-red-950 border-red-200' },
-              ].map(item => (
-                <div key={item.label} className={`${item.color} rounded-lg border p-3 text-center`}>
-                  <div className="text-2xl font-bold">{item.value}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{item.label}</div>
-                </div>
-              ))}
-              <div className="col-span-2 md:col-span-5 text-xs text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                {importResult.message} — {importResult.bankName} | Account: {importResult.accountNumber} | File: {importResult.sourceFile}
-              </div>
+          {!importing && importResult && (
+            <div className="mt-6 rounded-md bg-green-50 p-4 border border-green-200">
+              <h3 className="font-semibold text-green-800 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5" /> Import Completed
+              </h3>
+              <p className="text-sm text-green-700 mt-2 mb-2">
+                Processed a total of <strong>{importResult.totalRowsRead} rows</strong> from your statements.
+              </p>
+              <ul className="text-sm text-green-800 list-disc list-inside space-y-1 ml-1">
+                <li><strong>{importResult.creditsImported}</strong> credits successfully imported or updated</li>
+                <li><strong>{importResult.debitsSkipped}</strong> debits safely skipped</li>
+                <li><strong>{importResult.duplicatesSkipped}</strong> identical duplicates skipped</li>
+                {importResult.errors > 0 && <li className="text-red-600"><strong>{importResult.errors}</strong> lines could not be parsed</li>}
+              </ul>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* ── SECTION 2: Search ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Search className="h-5 w-5 text-primary" />
-            Search Transactions
-          </CardTitle>
-          <CardDescription>Search imported transactions by UTR number or amount.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="space-y-1.5 flex-1 min-w-48">
-              <label className="text-sm font-medium">UTR Number</label>
-              <Input
-                placeholder="e.g. 618213397873"
-                value={searchUtr}
-                onChange={e => setSearchUtr(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <div className="space-y-1.5 w-40">
-              <label className="text-sm font-medium">Amount (₹)</label>
-              <Input
-                type="number"
-                placeholder="e.g. 5600"
-                value={searchAmount}
-                onChange={e => setSearchAmount(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <Button onClick={handleSearch} disabled={searching} className="gap-2">
-              {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              Search
-            </Button>
-            {searchDone && (
-              <Button variant="ghost" size="sm" onClick={() => { setSearchResults([]); setSearchDone(false); setSearchUtr(''); setSearchAmount(''); setSelectedTxn(null); }}>
-                <X className="h-4 w-4 mr-1" /> Clear
-              </Button>
-            )}
-          </div>
-
-          {/* Results */}
-          {searchDone && (
-            <div className="mt-4">
-              {searchResults.length === 0 ? (
-                <div className="flex items-center gap-2 p-4 rounded-lg bg-muted text-muted-foreground">
-                  <AlertCircle className="h-4 w-4" />
-                  No transaction found matching the search criteria.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {searchResults.map(txn => (
-                    <div
-                      key={txn.id}
-                      onClick={() => { if (!txn.isMapped) setSelectedTxn(txn); }}
-                      className={`border rounded-lg p-4 transition-all cursor-pointer ${
-                        selectedTxn?.id === txn.id
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : txn.isMapped
-                            ? 'border-green-300 bg-green-50 dark:bg-green-950/20 cursor-not-allowed opacity-70'
-                            : 'hover:border-primary/40 hover:bg-muted/50'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between flex-wrap gap-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-semibold text-sm">{txn.utrNumber || '—'}</span>
-                            <Badge variant={txn.isMapped ? 'default' : 'secondary'} className={txn.isMapped ? 'bg-green-500 text-white' : ''}>
-                              {txn.isMapped ? '✓ Mapped' : 'Not Mapped'}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground max-w-md truncate">{txn.description}</p>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>{txn.bankName}</span>
-                            <span>•</span>
-                            <span>{txn.transactionDate}</span>
-                            <span>•</span>
-                            <span>{txn.month} {txn.year}</span>
-                          </div>
-                          {txn.isMapped && txn.mappedBy && (
-                            <p className="text-xs text-green-600">Mapped by {txn.mappedBy} on {txn.mappedAt?.split('T')[0]}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600 flex items-center gap-0.5">
-                            <IndianRupee className="h-4 w-4" />
-                            {Number(txn.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </div>
-                          <div className="text-xs text-muted-foreground">CREDIT</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── SECTION 3: Map Payment ── */}
-      {selectedTxn && (
-        <Card className="border-primary/30 shadow-md">
-          <CardHeader className="bg-primary/5 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-                Map Payment — UTR: <span className="font-mono">{selectedTxn.utrNumber}</span>
-              </CardTitle>
-              <div className="text-xl font-bold text-green-600 flex items-center gap-1">
-                <IndianRupee className="h-5 w-5" />
-                {Number(selectedTxn.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-            <CardDescription>
-              {selectedTxn.bankName} | {selectedTxn.transactionDate} | {selectedTxn.description?.slice(0, 80)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-5 space-y-5">
-            {/* Cascading dropdowns */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5" /> Select Hostel
-                </label>
-                <select
-                  className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                  value={selectedHostelId}
-                  onChange={e => setSelectedHostelId(e.target.value)}
-                >
-                  <option value="">— Select Hostel —</option>
-                  {hostels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  <BedDouble className="h-3.5 w-3.5" /> Select Room
-                </label>
-                <select
-                  className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                  value={selectedRoomId}
-                  onChange={e => setSelectedRoomId(e.target.value)}
-                  disabled={!selectedHostelId || loadingDropdown}
-                >
-                  <option value="">— Select Room —</option>
-                  {rooms.map(r => <option key={r.id} value={r.id}>{r.roomNumber}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5" /> Select Student
-                </label>
-                <select
-                  className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                  value={selectedStudentId}
-                  onChange={e => setSelectedStudentId(e.target.value)}
-                  disabled={!selectedRoomId || loadingDropdown}
-                >
-                  <option value="">— Select Student —</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Student Details Preview */}
-            {selectedStudent && (
-              <div className="bg-muted/50 border rounded-lg p-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  {selectedStudent.name}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Monthly Rent</p>
-                    <p className="font-semibold flex items-center gap-0.5">
-                      <IndianRupee className="h-3.5 w-3.5" />
-                      {selectedStudent.monthlyRent?.toLocaleString('en-IN') || '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Transaction Amount</p>
-                    <p className="font-semibold text-green-600 flex items-center gap-0.5">
-                      <IndianRupee className="h-3.5 w-3.5" />
-                      {Number(selectedTxn.amount).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Pending Payments</p>
-                    <p className="font-semibold">
-                      {pendingPaymentsThisMonth.length > 0
-                        ? <Badge variant="destructive">{pendingPaymentsThisMonth.length} pending</Badge>
-                        : <Badge variant="secondary">None this month</Badge>}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Advance Deposit</p>
-                    <p className="font-semibold flex items-center gap-0.5">
-                      <IndianRupee className="h-3.5 w-3.5" />
-                      {selectedStudent.advanceDeposit?.toLocaleString('en-IN') || '0'}
-                    </p>
-                  </div>
-                </div>
-
-                {pendingPaymentsThisMonth.length > 0 && (
-                  <div className="mt-3 p-2 rounded bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 text-xs text-yellow-800 dark:text-yellow-200">
-                    Found pending payment for {selectedTxn.month} {selectedTxn.year}. 
-                    This transaction will be applied to that payment record.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Confirm Button */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleConfirmPayment}
-                disabled={!selectedStudentId || confirming}
-                className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                size="lg"
-              >
-                {confirming
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <CheckCircle2 className="h-4 w-4" />}
-                {confirming ? 'Confirming…' : 'Mark as Paid'}
-              </Button>
-              <Button variant="outline" onClick={() => { setSelectedTxn(null); setSelectedHostelId(''); setSelectedStudentId(''); }}>
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
       </TabsContent>
 
       <TabsContent value="grid">

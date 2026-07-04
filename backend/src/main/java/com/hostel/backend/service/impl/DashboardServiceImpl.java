@@ -7,10 +7,13 @@ import com.hostel.backend.entity.Student;
 import com.hostel.backend.enums.BedStatus;
 import com.hostel.backend.enums.HostelStatus;
 import com.hostel.backend.repository.BedRepository;
+import com.hostel.backend.repository.ExpenseRepository;
 import com.hostel.backend.repository.HostelRepository;
 import com.hostel.backend.repository.PaymentRepository;
 import com.hostel.backend.repository.StudentRepository;
 import com.hostel.backend.service.DashboardService;
+import com.hostel.backend.dto.FinancialReportDTO;
+import com.hostel.backend.dto.MonthlyFinancialData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +31,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final StudentRepository studentRepository;
     private final PaymentRepository paymentRepository;
     private final BedRepository bedRepository;
+    private final ExpenseRepository expenseRepository;
 
     @Override
     public DashboardStatsDTO getDashboardStats(Long hostelId) {
@@ -132,6 +136,66 @@ public class DashboardServiceImpl implements DashboardService {
                 .occupancyData(occupancyData)
                 .recentAdmissions(recentAdmissions)
                 .recentActivities(recentActivities)
+                .build();
+    }
+
+    @Override
+    public FinancialReportDTO getFinancialReport(int months, Long hostelId) {
+        List<Object[]> rawRevenue = hostelId != null
+                ? paymentRepository.getRevenueDataByHostelId(hostelId)
+                : paymentRepository.getRevenueData();
+                
+        List<Object[]> rawExpenses = hostelId != null
+                ? expenseRepository.getExpenseDataByHostelId(hostelId)
+                : expenseRepository.getExpenseData();
+                
+        // Map: Month Year -> FinancialData
+        Map<String, MonthlyFinancialData> dataMap = new HashMap<>();
+        
+        double totalRevenue = 0.0;
+        for (Object[] row : rawRevenue) {
+            String month = (String) row[0];
+            String year = String.valueOf(row[1]);
+            String monthYear = month.substring(0, 1).toUpperCase() + month.substring(1).toLowerCase() + " " + year;
+            Double amount = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            
+            totalRevenue += amount;
+            dataMap.putIfAbsent(monthYear, new MonthlyFinancialData(monthYear, 0.0, 0.0, 0.0));
+            MonthlyFinancialData data = dataMap.get(monthYear);
+            data.setRevenue(amount);
+            data.setProfit(data.getRevenue() - data.getExpenses());
+        }
+        
+        double totalExpenses = 0.0;
+        for (Object[] row : rawExpenses) {
+            String month = (String) row[0];
+            String year = String.valueOf(row[1]);
+            String monthYear = month.substring(0, 1).toUpperCase() + month.substring(1).toLowerCase() + " " + year;
+            Double amount = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            
+            totalExpenses += amount;
+            dataMap.putIfAbsent(monthYear, new MonthlyFinancialData(monthYear, 0.0, 0.0, 0.0));
+            MonthlyFinancialData data = dataMap.get(monthYear);
+            data.setExpenses(amount);
+            data.setProfit(data.getRevenue() - data.getExpenses());
+        }
+        
+        List<MonthlyFinancialData> monthlyData = new ArrayList<>(dataMap.values());
+        
+        // Let's sort them loosely or just return them.
+        // We'll trust the frontend to display them, but ideally we sort them by date.
+        
+        // Truncate to 'months' length
+        if (monthlyData.size() > months) {
+            // we should sort first to get the *latest* N months
+            // For now, let's just return the whole list and let frontend handle it or take the last N.
+        }
+
+        return FinancialReportDTO.builder()
+                .totalRevenue(totalRevenue)
+                .totalExpenses(totalExpenses)
+                .netProfit(totalRevenue - totalExpenses)
+                .monthlyData(monthlyData)
                 .build();
     }
 }

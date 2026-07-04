@@ -20,7 +20,7 @@ public class SystemSettingController {
     private final SystemSettingService service;
 
     @PostMapping
-    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<SystemSettingDTO> createSetting(@Valid @RequestBody SystemSettingDTO dto) {
         return new ResponseEntity<>(service.createSetting(dto), HttpStatus.CREATED);
     }
@@ -38,7 +38,7 @@ public class SystemSettingController {
     }
 
     @PutMapping("/{key}")
-    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<SystemSettingDTO> updateSetting(@PathVariable String key, @Valid @RequestBody SystemSettingDTO dto) {
         return ResponseEntity.ok(service.updateSetting(key, dto));
     }

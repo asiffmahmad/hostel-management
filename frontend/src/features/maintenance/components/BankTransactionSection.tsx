@@ -15,7 +15,6 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
   const { toast } = useToast();
   
   const [data, setData] = useState([]);
-  const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [pageCount, setPageCount] = useState(0);
   
@@ -53,12 +52,6 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
       const { data: resData } = await api.get(`/bank-transactions?${params.toString()}`);
       setData(resData.content || []);
       setPageCount(resData.totalPages || 0);
-
-      // Fetch summary if month and year are present
-      if (month && year) {
-        const { data: sumData } = await api.get(`/bank-transactions/month?month=${month}&year=${year}`);
-        setSummary(sumData);
-      }
     } catch (error) {
       toast({ title: 'Failed to fetch transactions', variant: 'destructive' });
     } finally {
@@ -120,6 +113,17 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
     }
   };
 
+  const handleUnmapPayment = async (id: number) => {
+    if (!window.confirm("Are you sure you want to remove this payment mapping?")) return;
+    try {
+      await api.post(`/bank/unmap-payment/${id}`);
+      toast({ title: "Mapping removed successfully" });
+      fetchTransactions();
+    } catch (e: any) {
+      toast({ title: e.response?.data?.message || "Failed to remove mapping", variant: 'destructive' });
+    }
+  };
+
   const handleViewDetails = (txn: any) => {
     setSelectedTxn(txn);
     setIsModalOpen(true);
@@ -128,43 +132,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200">
-            <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">Total Transactions</span>
-              <span className="text-2xl font-bold">{summary.totalTransactions}</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-200">
-            <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">Total Credit</span>
-              <span className="text-xl font-bold text-green-600">₹{summary.totalCreditAmount?.toLocaleString('en-IN') || 0}</span>
-              <span className="text-xs text-muted-foreground">({summary.creditTransactions} txns)</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-red-50/50 dark:bg-red-950/20 border-red-200">
-            <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">Total Debit</span>
-              <span className="text-xl font-bold text-red-600">₹{summary.totalDebitAmount?.toLocaleString('en-IN') || 0}</span>
-              <span className="text-xs text-muted-foreground">({summary.debitTransactions} txns)</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200">
-            <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">Mapped</span>
-              <span className="text-2xl font-bold text-emerald-600">{summary.mappedTransactions}</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-orange-50/50 dark:bg-orange-950/20 border-orange-200">
-            <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">Unmapped</span>
-              <span className="text-2xl font-bold text-orange-600">{summary.unmappedTransactions}</span>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
 
       {/* Filters and Actions */}
       <Card>
@@ -244,6 +212,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
         loading={loading}
         onViewDetails={handleViewDetails}
         onMapPayment={onMapPayment}
+        onUnmapPayment={handleUnmapPayment}
         onDelete={handleDelete}
         pagination={pagination}
         setPagination={setPagination}

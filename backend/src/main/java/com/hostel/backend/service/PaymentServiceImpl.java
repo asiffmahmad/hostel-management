@@ -60,6 +60,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         existingPayment.setAmount(paymentDTO.getAmount());
+        existingPayment.setExpectedAmount(paymentDTO.getExpectedAmount() != null ? paymentDTO.getExpectedAmount() : existingPayment.getExpectedAmount());
+        existingPayment.setDueAmount(paymentDTO.getDueAmount() != null ? paymentDTO.getDueAmount() : existingPayment.getDueAmount());
         existingPayment.setMonth(paymentDTO.getMonth());
         existingPayment.setYear(paymentDTO.getYear());
         existingPayment.setStatus(paymentDTO.getStatus());
@@ -138,7 +140,9 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setStudent(student);
                 payment.setMonth(currentMonth);
                 payment.setYear(currentYear);
-                payment.setAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
+                payment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
+                payment.setAmount(0.0);
+                payment.setDueAmount(payment.getExpectedAmount());
                 payment.setStatus("PENDING");
                 // Due date can be set based on the selected year and month if valid, but keeping default logic for simplicity
                 int dueYear = Integer.parseInt(currentYear);

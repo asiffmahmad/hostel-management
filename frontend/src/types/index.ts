@@ -59,7 +59,9 @@ export interface Payment {
   amount: number;
   month: string;
   year: string;
-  status: 'PAID' | 'PENDING' | 'OVERDUE';
+  status: 'PAID' | 'PENDING' | 'PENDING DUE' | 'OVERDUE';
+  expectedAmount?: number;
+  dueAmount?: number;
   dueDate: string;
   utrNumber?: string;
 }

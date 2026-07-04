@@ -33,10 +33,12 @@ public class BankTransactionController {
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
     public ResponseEntity<BankImportResultDTO> uploadStatement(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("month") String month,
-            @RequestParam("year") String year) {
+            @RequestParam(value = "month", required = false) String month,
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(value = "provider", required = false) String provider,
+            @RequestParam(value = "mode", defaultValue = "REPLACE") String mode) {
 
-        BankImportResultDTO result = bankTransactionService.importStatement(file, month, year);
+        BankImportResultDTO result = bankTransactionService.importStatement(file, month, year, provider, mode);
         return ResponseEntity.ok(result);
     }
 
@@ -100,6 +102,21 @@ public class BankTransactionController {
         }
         PaymentDTO result = bankTransactionService.mapToPayment(request);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Unmap a previously mapped bank transaction.
+     *
+     * POST /api/bank/unmap-payment/{id}
+     */
+    @PostMapping("/unmap-payment/{id}")
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> unmapPayment(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails != null ? userDetails.getUsername() : "system";
+        bankTransactionService.unmapPayment(id, username);
+        return ResponseEntity.ok(new MessageResponse("Transaction unmapped successfully."));
     }
 
     /**

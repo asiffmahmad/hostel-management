@@ -15,7 +15,7 @@ const paymentSchema = z.object({
   amount: z.coerce.number().min(1, 'Amount must be > 0'),
   month: z.string().min(1, 'Month is required'),
   year: z.string().min(4, 'Year is required'),
-  status: z.enum(['PAID', 'PENDING', 'OVERDUE']),
+  status: z.enum(['PAID', 'PENDING', 'PENDING DUE', 'OVERDUE']),
   dueDate: z.string().min(1, 'Due date is required'),
   utrNumber: z.string().optional().or(z.literal('')),
 });
@@ -171,6 +171,7 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
                     >
                       <option value="PAID">PAID</option>
                       <option value="PENDING">PENDING</option>
+                      <option value="PENDING DUE">PENDING DUE</option>
                       <option value="OVERDUE">OVERDUE</option>
                     </select>
                   </FormControl>

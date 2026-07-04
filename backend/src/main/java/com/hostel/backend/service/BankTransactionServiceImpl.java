@@ -46,18 +46,25 @@ public class BankTransactionServiceImpl implements BankTransactionService {
 
     @Override
     @Transactional
-    public BankImportResultDTO importStatement(MultipartFile file, String month, String year) {
-        String monthUpper = month.toUpperCase();
+    public BankImportResultDTO importStatement(MultipartFile file, String month, String year, String provider, String mode) {
+        String monthUpper = month != null && !month.trim().isEmpty() ? month.toUpperCase() : "AUTO_DETECT";
+        String safeYear = year != null && !year.trim().isEmpty() ? year : "AUTO_DETECT";
 
-        // Step 1: Soft-delete any existing transactions for this month/year (replace-mode)
-        long existingCount = bankTxnRepository.countByMonthAndYearAndIsDeletedFalse(monthUpper, year);
-        if (existingCount > 0) {
-            log.info("Replacing {} existing transactions for {}/{}", existingCount, monthUpper, year);
-            bankTxnRepository.softDeleteByMonthAndYear(monthUpper, year);
+        // Step 1: Handle mode (REPLACE vs APPEND)
+        if ("REPLACE".equalsIgnoreCase(mode)) {
+            long existingCount = bankTxnRepository.countByMonthAndYearAndIsDeletedFalse(monthUpper, safeYear);
+            if (existingCount > 0) {
+                log.info("Replacing {} existing transactions for {}/{}", existingCount, monthUpper, safeYear);
+                bankTxnRepository.softDeleteByMonthAndYear(monthUpper, safeYear);
+            }
+        } else {
+            log.info("Appending transactions for {}/{}", monthUpper, safeYear);
         }
 
         // Step 2: Parse the uploaded file
-        BankStatementParser parser = parserFactory.getParser(file);
+        BankStatementParser parser = (provider != null && !provider.isEmpty()) 
+                ? parserFactory.getParserByBank(provider)
+                : parserFactory.getParser(file);
         String accountNumber;
         List<ParsedTransaction> allTransactions;
 
@@ -68,7 +75,7 @@ public class BankTransactionServiceImpl implements BankTransactionService {
             log.error("Failed to parse bank statement: {}", e.getMessage(), e);
             return BankImportResultDTO.builder()
                     .month(monthUpper)
-                    .year(year)
+                    .year(safeYear)
                     .sourceFile(file.getOriginalFilename())
                     .message("Parse error: " + e.getMessage())
                     .errors(1)
@@ -90,12 +97,31 @@ public class BankTransactionServiceImpl implements BankTransactionService {
                     continue;
                 }
 
-                // Skip if UTR already exists (from a previous non-deleted import)
-                if (txn.getUtrNumber() != null &&
-                        bankTxnRepository.existsByUtrNumberAndIsDeletedFalse(txn.getUtrNumber())) {
-                    duplicatesSkipped++;
-                    continue;
+                // Check if UTR already exists (from a previous non-deleted import)
+                if (txn.getUtrNumber() != null) {
+                    java.util.Optional<BankTransaction> existingOpt = bankTxnRepository.findByUtrNumberAndIsDeletedFalse(txn.getUtrNumber());
+                    if (existingOpt.isPresent()) {
+                        BankTransaction existing = existingOpt.get();
+                        existing.setBankName(txn.getBankName() != null ? txn.getBankName() : parser.getSupportedBank());
+                        existing.setTransactionDate(txn.getTransactionDate());
+                        if (txn.getTransactionDate() != null) {
+                            existing.setMonth(txn.getTransactionDate().getMonth().name());
+                            existing.setYear(String.valueOf(txn.getTransactionDate().getYear()));
+                        }
+                        existing.setValueDate(txn.getValueDate());
+                        existing.setDescription(txn.getDescription());
+                        existing.setAmount(txn.getAmount() != null ? txn.getAmount() : BigDecimal.ZERO);
+                        existing.setCredit(txn.getCredit());
+                        existing.setSourceFile(file.getOriginalFilename());
+                        
+                        toSave.add(existing);
+                        creditsImported++;
+                        continue;
+                    }
                 }
+
+                String txnMonth = txn.getTransactionDate() != null ? txn.getTransactionDate().getMonth().name() : monthUpper;
+                String txnYear = txn.getTransactionDate() != null ? String.valueOf(txn.getTransactionDate().getYear()) : safeYear;
 
                 BankTransaction entity = BankTransaction.builder()
                         .bankName(txn.getBankName() != null ? txn.getBankName() : parser.getSupportedBank())
@@ -110,8 +136,8 @@ public class BankTransactionServiceImpl implements BankTransactionService {
                         .debit(null)
                         .balance(txn.getBalance())
                         .referenceNumber(txn.getReferenceNumber())
-                        .month(monthUpper)
-                        .year(year)
+                        .month(txnMonth)
+                        .year(txnYear)
                         .sourceFile(file.getOriginalFilename())
                         .importedAt(LocalDateTime.now())
                         .isMapped(false)
@@ -132,12 +158,12 @@ public class BankTransactionServiceImpl implements BankTransactionService {
 
         // Audit log
         saveAudit("BankStatement", null, "IMPORT",
-                "Imported " + creditsImported + " credit transactions for " + monthUpper + "/" + year,
+                "Imported " + creditsImported + " credit transactions for " + monthUpper + "/" + safeYear,
                 file.getOriginalFilename());
 
         return BankImportResultDTO.builder()
                 .month(monthUpper)
-                .year(year)
+                .year(safeYear)
                 .bankName(parser.getSupportedBank())
                 .accountNumber(accountNumber)
                 .sourceFile(file.getOriginalFilename())
@@ -211,12 +237,25 @@ public class BankTransactionServiceImpl implements BankTransactionService {
             payment.setMonth(month);
             payment.setYear(year);
             payment.setDueDate(LocalDate.now());
+            payment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
+            payment.setAmount(0.0);
         }
 
         // Update payment with bank details
-        payment.setAmount(txn.getAmount().doubleValue());
-        payment.setStatus("PAID");
-        payment.setUtrNumber(txn.getUtrNumber());
+        double newAmountPaid = (payment.getAmount() != null ? payment.getAmount() : 0.0) + txn.getAmount().doubleValue();
+        payment.setAmount(newAmountPaid);
+        
+        double expected = payment.getExpectedAmount() != null ? payment.getExpectedAmount() : 0.0;
+        double due = Math.max(0.0, expected - newAmountPaid);
+        payment.setDueAmount(due);
+
+        if (due > 0) {
+            payment.setStatus("PENDING DUE");
+        } else {
+            payment.setStatus("PAID");
+        }
+
+        payment.setUtrNumber(txn.getUtrNumber()); // We keep the latest UTR directly on Payment record
         payment.setBankTransactionId(txn.getId());
         payment.setPaymentSource("BANK_IMPORT");
         payment.setBankName(txn.getBankName());
@@ -238,6 +277,60 @@ public class BankTransactionServiceImpl implements BankTransactionService {
                 request.getMappedBy());
 
         return paymentMapper.toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public void unmapPayment(Long bankTransactionId, String username) {
+        BankTransaction txn = bankTxnRepository.findById(bankTransactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bank transaction not found: " + bankTransactionId));
+
+        if (!txn.getIsMapped()) {
+            throw new IllegalStateException("Transaction is not currently mapped.");
+        }
+
+        Long paymentId = txn.getMappedPaymentId();
+        if (paymentId != null) {
+            paymentRepository.findById(paymentId).ifPresent(payment -> {
+                double newAmountPaid = (payment.getAmount() != null ? payment.getAmount() : 0.0) - txn.getAmount().doubleValue();
+                if (newAmountPaid < 0) newAmountPaid = 0.0;
+                payment.setAmount(newAmountPaid);
+                
+                double expected = payment.getExpectedAmount() != null ? payment.getExpectedAmount() : 0.0;
+                double due = Math.max(0.0, expected - newAmountPaid);
+                payment.setDueAmount(due);
+
+                if (newAmountPaid == 0.0) {
+                    payment.setStatus("PENDING");
+                    payment.setUtrNumber(null);
+                    payment.setBankTransactionId(null);
+                    payment.setPaymentSource("MANUAL");
+                    payment.setBankName(null);
+                    payment.setImportedDate(null);
+                } else {
+                    if (due > 0) {
+                        payment.setStatus("PENDING DUE");
+                    } else {
+                        payment.setStatus("PAID");
+                    }
+                    // Since it has partial amount paid by OTHER transactions, we might want to keep the UTR/bank info of the other one.
+                    // But for simplicity, we don't fetch the previous one. The payment source remains "BANK_IMPORT" if there's money.
+                }
+                
+                paymentRepository.save(payment);
+                
+                saveAudit("Payment", payment.getId(), "BANK_UNMAP",
+                        "Payment unmapped from bank UTR: " + txn.getUtrNumber(),
+                        username);
+            });
+        }
+
+        txn.setIsMapped(false);
+        txn.setMappedPaymentId(null);
+        txn.setMappedStudentId(null);
+        txn.setMappedBy(null);
+        txn.setMappedAt(null);
+        bankTxnRepository.save(txn);
     }
 
     @Override

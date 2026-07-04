@@ -22,9 +22,12 @@ import {
   Map,
   Landmark,
   MessageSquareWarning,
-  Receipt
+  Receipt,
+  Search,
+  PieChart
 } from 'lucide-react';
 import HostelFilter from '@/components/HostelFilter';
+import api from '@/services/api';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -33,6 +36,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const [maintenanceOpen, setMaintenanceOpen] = useState(
     location.pathname.startsWith('/maintenance')
   );
@@ -49,6 +53,21 @@ const AppLayout = () => {
     };
     handleResize();
     window.addEventListener('resize', handleResize);
+    
+    const fetchSettings = async () => {
+      try {
+        const { data } = await api.get('/settings');
+        const settingsMap: Record<string, string> = {};
+        data.forEach((s: any) => {
+          settingsMap[s.settingKey] = s.settingValue;
+        });
+        setSettings(settingsMap);
+      } catch (err) {
+        console.error('Failed to load settings', err);
+      }
+    };
+    fetchSettings();
+    
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -59,23 +78,39 @@ const AppLayout = () => {
 
   const mainNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Hostels', path: '/hostels-overview', icon: Building },
-    { name: 'Students', path: '/students', icon: Users },
-    { name: 'Payments', path: '/payments', icon: CreditCard },
-    { name: 'Expenses', path: '/expenses', icon: Receipt },
-    { name: 'Complaints', path: '/complaints', icon: MessageSquareWarning },
-    { name: 'Reports', path: '/reports', icon: FileText },
+    { name: 'Hostels', path: '/hostels-overview', icon: Building, menuKey: 'MENU_HOSTELS_ENABLED' },
+    { name: 'Students', path: '/students', icon: Users, menuKey: 'MENU_STUDENTS_ENABLED' },
+    { name: 'Payments', path: '/payments', icon: CreditCard, menuKey: 'MENU_PAYMENTS_ENABLED' },
+    { name: 'Expenses', path: '/expenses', icon: Receipt, menuKey: 'MENU_EXPENSES_ENABLED' },
+    { name: 'Give Complaint', path: '/complaints/give', icon: MessageSquareWarning, menuKey: 'MENU_GIVE_COMPLAINTS_ENABLED' },
+    { name: 'View Complaints', path: '/complaints/view', icon: MessageSquareWarning, menuKey: 'MENU_VIEW_COMPLAINTS_ENABLED' },
+    { name: 'Reports', path: '/reports', icon: FileText, menuKey: 'MENU_REPORTS_ENABLED' },
+    { name: 'Financial Dashboard', path: '/reports/financial', icon: PieChart, menuKey: 'MENU_FINANCIAL_DASHBOARD_ENABLED', ownerOnly: true },
   ];
 
   const maintenanceItems = [
-    { name: 'Admissions', path: '/admin/admissions', icon: Users },
-    { name: 'Hostel Mgmt', path: '/maintenance/hostels', icon: Building },
-    { name: 'Room Mgmt', path: '/maintenance/rooms', icon: Building },
-    { name: 'Bed Mgmt', path: '/maintenance/beds', icon: BedDouble },
-    { name: 'Student Mapping', path: '/maintenance/mapping', icon: Map },
-    { name: 'Payment Check', path: '/maintenance/payment-check', icon: Landmark },
-    { name: 'System Settings', path: '/maintenance/settings', icon: Settings },
+    { name: 'Admissions', path: '/admin/admissions', icon: Users, menuKey: 'MENU_ADMISSIONS_ENABLED' },
+    { name: 'Hostel Mgmt', path: '/maintenance/hostels', icon: Building, menuKey: 'MENU_HOSTELS_ENABLED' },
+    { name: 'Room Mgmt', path: '/maintenance/rooms', icon: Building, menuKey: 'MENU_ROOMS_ENABLED' },
+    { name: 'Bed Mgmt', path: '/maintenance/beds', icon: BedDouble, menuKey: 'MENU_BEDS_ENABLED' },
+    { name: 'Student Mapping', path: '/maintenance/mapping', icon: Map, menuKey: 'MENU_STUDENT_MAPPING_ENABLED' },
+    { name: 'Search Transactions', path: '/maintenance/search-transactions', icon: Search, menuKey: 'MENU_SEARCH_TRANSACTIONS_ENABLED' },
+    { name: 'Payment Check', path: '/maintenance/payment-check', icon: Landmark, menuKey: 'MENU_PAYMENT_CHECK_ENABLED' },
+    { name: 'System Settings', path: '/maintenance/settings', icon: Settings, menuKey: 'MENU_SYSTEM_SETTINGS_ENABLED' },
+    { name: 'Menu Settings', path: '/maintenance/menu-settings', icon: Settings, ownerOnly: true },
   ];
+
+  const isOwner = user?.roles?.[0] === 'ROLE_OWNER';
+
+  const isMenuVisible = (item: any) => {
+    if (item.ownerOnly && !isOwner) return false;
+    if (isOwner) return true; // Owner sees all modules (except ownerOnly gets checked above)
+    if (!item.menuKey) return true; // Unprotected items
+    return settings[item.menuKey] !== 'false';
+  };
+
+  const filteredMainNavItems = mainNavItems.filter(isMenuVisible);
+  const filteredMaintenanceItems = maintenanceItems.filter(isMenuVisible);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden relative">
@@ -105,7 +140,7 @@ const AppLayout = () => {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {mainNavItems.map((item) => {
+          {filteredMainNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -126,56 +161,58 @@ const AppLayout = () => {
             );
           })}
 
-          <div className="pt-4 mt-4 border-t border-border">
-            {sidebarOpen ? (
-              <button
-                onClick={() => setMaintenanceOpen(!maintenanceOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Wrench size={20} />
-                  <span>Maintenance</span>
-                </div>
-                {maintenanceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-            ) : (
-              <div className="flex justify-center py-2 text-muted-foreground">
-                <Wrench size={20} />
-              </div>
-            )}
-            
-            <AnimatePresence>
-              {maintenanceOpen && sidebarOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden space-y-1 mt-1 pl-4"
+          {filteredMaintenanceItems.length > 0 && (
+            <div className="pt-4 mt-4 border-t border-border">
+              {sidebarOpen ? (
+                <button
+                  onClick={() => setMaintenanceOpen(!maintenanceOpen)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {maintenanceItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                            isActive
-                              ? 'bg-secondary text-secondary-foreground font-medium'
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          }`
-                        }
-                        onClick={() => { if (isMobile) setSidebarOpen(false); }}
-                      >
-                        <Icon size={16} className="shrink-0" />
-                        <span>{item.name}</span>
-                      </NavLink>
-                    );
-                  })}
-                </motion.div>
+                  <div className="flex items-center gap-3">
+                    <Wrench size={20} />
+                    <span>Maintenance</span>
+                  </div>
+                  {maintenanceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+              ) : (
+                <div className="flex justify-center py-2 text-muted-foreground">
+                  <Wrench size={20} />
+                </div>
               )}
-            </AnimatePresence>
-          </div>
+              
+              <AnimatePresence>
+                {maintenanceOpen && sidebarOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden space-y-1 mt-1 pl-4"
+                  >
+                    {filteredMaintenanceItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                              isActive
+                                ? 'bg-secondary text-secondary-foreground font-medium'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            }`
+                          }
+                          onClick={() => { if (isMobile) setSidebarOpen(false); }}
+                        >
+                          <Icon size={16} className="shrink-0" />
+                          <span>{item.name}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t shrink-0">
