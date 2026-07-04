@@ -32,22 +32,6 @@ public class InitialUserLoader implements CommandLineRunner {
             userRepository.save(owner);
         }
 
-        // Ensure admin exists with correct password
-        userRepository.findByUsername("admin").ifPresentOrElse(admin -> {
-            // Update existing admin's password to Admin@123 since the SQL script had a bad hash
-            admin.setPassword(passwordEncoder.encode("Admin@123"));
-            admin.setRole(Role.ADMIN);
-            userRepository.save(admin);
-        }, () -> {
-            User admin = User.builder()
-                    .username("admin")
-                    .name("System Admin")
-                    .email("admin@hostel.com")
-                    .phone("0987654321")
-                    .password(passwordEncoder.encode("Admin@123"))
-                    .role(Role.ADMIN)
-                    .build();
-            userRepository.save(admin);
-        });
+
     }
 }
