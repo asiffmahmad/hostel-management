@@ -28,6 +28,13 @@ public class AdminAdmissionController {
         return ResponseEntity.ok(pending);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<AdmissionRequestResponseDTO> updateAdmission(@PathVariable Long id, @RequestBody com.hostel.backend.dto.AdmissionRequestCreateDTO dto) {
+        String adminUsername = "admin"; // placeholder
+        AdmissionRequestResponseDTO updated = admissionService.updateRequest(id, dto, adminUsername);
+        return ResponseEntity.ok(updated);
+    }
+
     @PostMapping("/{id}/approve")
     public ResponseEntity<AdmissionRequestResponseDTO> approveAdmission(@PathVariable Long id) {
         // In a real scenario, retrieve admin username from security context

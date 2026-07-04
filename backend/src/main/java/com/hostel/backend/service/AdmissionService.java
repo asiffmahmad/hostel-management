@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface AdmissionService {
     AdmissionRequestResponseDTO submitRequest(AdmissionRequestCreateDTO dto, String username);
+    AdmissionRequestResponseDTO updateRequest(Long id, AdmissionRequestCreateDTO dto, String adminUsername);
     List<AdmissionRequestResponseDTO> getPendingRequests();
     List<AdmissionRequestResponseDTO> getPendingByHostel(String hostelCode);
     AdmissionRequestResponseDTO getRequest(Long id);

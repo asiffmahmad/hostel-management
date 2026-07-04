@@ -69,7 +69,14 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public List<ExpenseDTO> getExpensesByHostelId(Long hostelId) {
-        return expenseRepository.findByHostelId(hostelId).stream()
+        return expenseRepository.findByHostelIdAndIsDeletedFalse(hostelId).stream()
+                .map(expenseMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ExpenseDTO> getAllExpenses() {
+        return expenseRepository.findByIsDeletedFalse().stream()
                 .map(expenseMapper::toDto)
                 .collect(Collectors.toList());
     }

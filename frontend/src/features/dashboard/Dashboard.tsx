@@ -17,8 +17,9 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { getExpenses } from '@/services/expenses';
 import api from '@/services/api';
-import type { DashboardStats, Hostel } from '@/types';
+import type { DashboardStats, Hostel, Expense } from '@/types';
 
 const Dashboard = () => {
   const { selectedHostelId } = useHostel();
@@ -42,6 +43,16 @@ const Dashboard = () => {
     refetchInterval: 30000,
   });
 
+  const { data: expenses } = useQuery<Expense[]>({
+    queryKey: ['expenses', selectedHostelId],
+    queryFn: async () => {
+      const res = await getExpenses(selectedHostelId ? Number(selectedHostelId) : undefined);
+      return res.data;
+    },
+  });
+
+  const totalExpenses = expenses?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+
   const selectedHostelName = selectedHostelId 
     ? hostels?.find(h => h.id.toString() === selectedHostelId)?.name || 'Hostel'
     : null;
@@ -51,8 +62,8 @@ const Dashboard = () => {
     { title: 'Total Beds', value: stats?.totalBeds || 0, icon: BedDouble, color: 'text-orange-500' },
     { title: 'Occupied Beds', value: stats?.occupiedBeds || 0, icon: BedDouble, color: 'text-red-500' },
     { title: 'Vacant Beds', value: stats?.vacantBeds || 0, icon: BedDouble, color: 'text-green-500' },
-    { title: 'Occupancy Rate', value: `${stats?.occupancyRate || 0}%`, icon: BedDouble, color: 'text-teal-500' },
     { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue || 0}`, icon: Wallet, color: 'text-purple-500' },
+    { title: 'Total Expenses', value: `₹${totalExpenses.toFixed(2)}`, icon: Wallet, color: 'text-red-500' },
   ];
 
   if (isLoading) {

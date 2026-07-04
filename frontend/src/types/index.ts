@@ -99,3 +99,14 @@ export interface AdmissionRequestResponseDTO extends AdmissionRequestCreateDTO {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface Expense {
+  id?: number;
+  hostelId: number;
+  category: string;
+  amount: number;
+  expenseDate: string;
+  description?: string;
+  receiptUrl?: string;
+  recordedBy: number;
+}

@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    List<Expense> findByHostelId(Long hostelId);
+    List<Expense> findByHostelIdAndIsDeletedFalse(Long hostelId);
+    List<Expense> findByIsDeletedFalse();
 }

@@ -31,6 +31,12 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.getExpensesByHostelId(hostelId));
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<List<ExpenseDTO>> getAllExpenses() {
+        return ResponseEntity.ok(expenseService.getAllExpenses());
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
     public ResponseEntity<ExpenseDTO> getExpenseById(@PathVariable Long id) {

@@ -23,6 +23,7 @@ const RoomMgmt = lazy(() => import('@/features/maintenance/RoomMgmt'));
 const BedMgmt = lazy(() => import('@/features/maintenance/BedMgmt'));
 const StudentMapping = lazy(() => import('@/features/maintenance/StudentMapping'));
 const PaymentCheck = lazy(() => import('@/features/maintenance/PaymentCheck'));
+const ExpensesDashboard = lazy(() => import('@/features/expenses/ExpensesDashboard'));
 
 // Error Pages
 const NotFound = () => <div className="flex items-center justify-center h-screen text-2xl font-semibold">404 - Page Not Found</div>;
@@ -53,6 +54,7 @@ const AppRoutes = () => {
             <Route path="/payments" element={<Payments />} />
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/expenses" element={<ExpensesDashboard />} />
             
             {/* Maintenance Routes */}
             <Route path="/maintenance/hostels" element={<Hostels />} />

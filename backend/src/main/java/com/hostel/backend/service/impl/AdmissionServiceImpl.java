@@ -66,6 +66,41 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     @Override
+    public AdmissionRequestResponseDTO updateRequest(Long id, AdmissionRequestCreateDTO dto, String adminUsername) {
+        HostelAdmissionRequest request = admissionRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Admission request not found"));
+
+        if (request.getStatus() != AdmissionStatus.PENDING) {
+            throw new IllegalArgumentException("Only pending admission requests can be edited");
+        }
+
+        // Validate hostel
+        Hostel hostel = hostelRepository.findByHostelCodeAndIsDeletedFalse(dto.getHostelCode())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid hostel selection"));
+        
+        // Validate room
+        Room room = roomRepository.findByHostelIdAndRoomNumber(hostel.getId(), dto.getRoomNumber())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid room selection"));
+
+        request.setStudentName(dto.getStudentName());
+        request.setEmail(dto.getEmail());
+        request.setPhone(dto.getPhone());
+        request.setParentPhone(dto.getParentPhone());
+        request.setFatherName(dto.getFatherName());
+        request.setAadhaarNumber(dto.getAadhaarNumber());
+        request.setAddress(dto.getAddress());
+        request.setHostelCode(dto.getHostelCode());
+        request.setRoomNumber(dto.getRoomNumber());
+        request.setBedName(dto.getBedName() != null && !dto.getBedName().isEmpty() ? dto.getBedName() : "Pending Assignment");
+
+        HostelAdmissionRequest saved = admissionRepo.save(request);
+
+        auditLogService.logAction("HOSTEL_ADMISSION_REQUEST", saved.getId(), AuditAction.ADMISSION_UPDATED.name(), adminUsername != null ? adminUsername : "SYSTEM", "Admission request updated");
+
+        return toResponseDto(saved);
+    }
+
+    @Override
     public List<AdmissionRequestResponseDTO> getPendingRequests() {
         return admissionRepo.findAll().stream()
                 .filter(r -> r.getStatus() == AdmissionStatus.PENDING)

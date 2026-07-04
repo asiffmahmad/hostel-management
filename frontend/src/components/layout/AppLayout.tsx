@@ -21,7 +21,8 @@ import {
   Settings,
   Map,
   Landmark,
-  MessageSquareWarning
+  MessageSquareWarning,
+  Receipt
 } from 'lucide-react';
 import HostelFilter from '@/components/HostelFilter';
 
@@ -61,6 +62,7 @@ const AppLayout = () => {
     { name: 'Hostels', path: '/hostels-overview', icon: Building },
     { name: 'Students', path: '/students', icon: Users },
     { name: 'Payments', path: '/payments', icon: CreditCard },
+    { name: 'Expenses', path: '/expenses', icon: Receipt },
     { name: 'Complaints', path: '/complaints', icon: MessageSquareWarning },
     { name: 'Reports', path: '/reports', icon: FileText },
   ];
