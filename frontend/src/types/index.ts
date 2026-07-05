@@ -106,7 +106,7 @@ export interface AdmissionRequestResponseDTO extends AdmissionRequestCreateDTO {
 
 export interface Expense {
   id?: number;
-  hostelId: number;
+  hostelId?: number;
   category: string;
   amount: number;
   expenseDate: string;
