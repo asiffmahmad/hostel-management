@@ -46,6 +46,9 @@ public class StudentServiceImpl implements StudentService {
             }
             
             student.setBed(bed);
+            if (student.getHostel() == null && bed.getRoom() != null && bed.getRoom().getHostel() != null) {
+                student.setHostel(bed.getRoom().getHostel());
+            }
             bed.setStatus(BedStatus.OCCUPIED);
         }
 
@@ -98,7 +101,7 @@ public class StudentServiceImpl implements StudentService {
     public List<StudentDTO> getAllStudents(Long hostelId) {
         List<Student> students;
         if (hostelId != null) {
-            students = studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId);
+            students = studentRepository.findByHostelIdAndIsDeletedFalse(hostelId);
         } else {
             students = studentRepository.findByIsDeletedFalse();
         }
@@ -144,6 +147,9 @@ public class StudentServiceImpl implements StudentService {
         newBed.setStatus(BedStatus.OCCUPIED);
         newBed.setStudent(student);
         student.setBed(newBed);
+        if (newBed.getRoom() != null && newBed.getRoom().getHostel() != null) {
+            student.setHostel(newBed.getRoom().getHostel());
+        }
         bedRepository.save(newBed);
         
         logTransfer(student, oldBed, newBed, reason);

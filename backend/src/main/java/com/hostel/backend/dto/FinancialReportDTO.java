@@ -12,8 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FinancialReportDTO {
-    private Double totalRevenue;
+    private Double totalRevenue;       // same as collectedRevenue (kept for backward compat)
+    private Double expectedRevenue;    // sum of all active students' monthly rent
+    private Double collectedRevenue;   // actual PAID payments for the period
     private Double totalExpenses;
-    private Double netProfit;
+    private Double netProfit;          // collectedRevenue - totalExpenses
     private List<MonthlyFinancialData> monthlyData;
 }

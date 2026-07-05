@@ -40,11 +40,11 @@ public class DashboardServiceImpl implements DashboardService {
         long totalHostels = hostelId != null ? 1 : hostelRepository.countByIsDeletedFalse();
         
         long totalStudents = hostelId != null 
-                ? studentRepository.countByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                ? studentRepository.countByHostelIdAndIsDeletedFalse(hostelId)
                 : studentRepository.countByIsDeletedFalse();
                 
         long occupiedStudents = hostelId != null
-                ? studentRepository.countByBedRoomHostelIdAndStatusAndBedIsNotNullAndIsDeletedFalse(hostelId, "ACTIVE")
+                ? studentRepository.countByHostelIdAndStatusAndBedIsNotNullAndIsDeletedFalse(hostelId, "ACTIVE")
                 : studentRepository.countByStatusAndBedIsNotNullAndIsDeletedFalse("ACTIVE");
         
         long totalBeds = hostelId != null
@@ -61,8 +61,14 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         Double monthlyRevenue = hostelId != null
-                ? paymentRepository.sumAmountByHostelIdAndStatus(hostelId, "PAID")
-                : paymentRepository.sumAmountByStatus("PAID");
+                ? studentRepository.findByHostelIdAndIsDeletedFalse(hostelId).stream()
+                    .filter(s -> "ACTIVE".equals(s.getStatus()) && s.getBed() != null)
+                    .mapToDouble(s -> s.getMonthlyRent() != null ? s.getMonthlyRent() : 0.0)
+                    .sum()
+                : studentRepository.findByIsDeletedFalse().stream()
+                    .filter(s -> "ACTIVE".equals(s.getStatus()) && s.getBed() != null)
+                    .mapToDouble(s -> s.getMonthlyRent() != null ? s.getMonthlyRent() : 0.0)
+                    .sum();
         if (monthlyRevenue == null) monthlyRevenue = 0.0;
 
         // Dynamic Revenue Data via JPQL
@@ -96,7 +102,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         // Recent Admissions via DB Top 5
         List<Student> topStudents = hostelId != null
-                ? studentRepository.findTop5ByBedRoomHostelIdAndIsDeletedFalseOrderByCreatedAtDesc(hostelId)
+                ? studentRepository.findTop5ByHostelIdAndIsDeletedFalseOrderByCreatedAtDesc(hostelId)
                 : studentRepository.findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
                 
         List<Map<String, Object>> recentAdmissions = topStudents.stream()
@@ -104,14 +110,14 @@ public class DashboardServiceImpl implements DashboardService {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", s.getName());
                     map.put("date", s.getCreatedAt());
-                    map.put("hostel", s.getBed() != null ? s.getBed().getRoom().getHostel().getName() : "Unassigned");
+                    map.put("hostel", s.getHostel() != null ? s.getHostel().getName() : (s.getBed() != null ? s.getBed().getRoom().getHostel().getName() : "Unassigned"));
                     map.put("room", s.getBed() != null ? s.getBed().getRoom().getRoomNumber() : "N/A");
                     return map;
                 }).collect(Collectors.toList());
 
         // Recent Activities via DB Top 5
         List<Payment> topPayments = hostelId != null
-                ? paymentRepository.findTop5ByStudentBedRoomHostelIdOrderByCreatedAtDesc(hostelId)
+                ? paymentRepository.findTop5ByStudentHostelIdOrderByCreatedAtDesc(hostelId)
                 : paymentRepository.findTop5ByOrderByCreatedAtDesc();
                 
         List<Map<String, Object>> recentActivities = topPayments.stream()
@@ -191,8 +197,21 @@ public class DashboardServiceImpl implements DashboardService {
             // For now, let's just return the whole list and let frontend handle it or take the last N.
         }
 
+        // Calculate expected revenue = sum of all active students' monthly rent (Occupied beds * Monthly fee)
+        double expectedRevenue = hostelId != null
+                ? studentRepository.findByHostelIdAndIsDeletedFalse(hostelId).stream()
+                    .filter(s -> "ACTIVE".equals(s.getStatus()) && s.getBed() != null)
+                    .mapToDouble(s -> s.getMonthlyRent() != null ? s.getMonthlyRent() : 0)
+                    .sum()
+                : studentRepository.findByIsDeletedFalse().stream()
+                    .filter(s -> "ACTIVE".equals(s.getStatus()) && s.getBed() != null)
+                    .mapToDouble(s -> s.getMonthlyRent() != null ? s.getMonthlyRent() : 0)
+                    .sum();
+
         return FinancialReportDTO.builder()
                 .totalRevenue(totalRevenue)
+                .expectedRevenue(expectedRevenue)
+                .collectedRevenue(totalRevenue)
                 .totalExpenses(totalExpenses)
                 .netProfit(totalRevenue - totalExpenses)
                 .monthlyData(monthlyData)

@@ -37,10 +37,11 @@ public class StudentMapper {
             dto.setBedId(entity.getBed().getId());
             if (entity.getBed().getRoom() != null) {
                 dto.setRoomId(entity.getBed().getRoom().getId());
-                if (entity.getBed().getRoom().getHostel() != null) {
-                    dto.setHostelId(entity.getBed().getRoom().getHostel().getId());
-                }
             }
+        }
+        
+        if (entity.getHostel() != null) {
+            dto.setHostelId(entity.getHostel().getId());
         }
 
         dto.setMonthlyRent(entity.getMonthlyRent());
@@ -79,6 +80,12 @@ public class StudentMapper {
             Bed bed = new Bed();
             bed.setId(dto.getBedId());
             entity.setBed(bed);
+        }
+
+        if (dto.getHostelId() != null) {
+            com.hostel.backend.entity.Hostel hostel = new com.hostel.backend.entity.Hostel();
+            hostel.setId(dto.getHostelId());
+            entity.setHostel(hostel);
         }
 
         entity.setMonthlyRent(dto.getMonthlyRent() != null ? dto.getMonthlyRent() : 0.0);

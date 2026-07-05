@@ -32,7 +32,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     @Override
     public ByteArrayInputStream generateStudentReportCsv(Long hostelId) throws IOException {
         List<Student> students = (hostelId != null) 
-                ? studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                ? studentRepository.findByHostelIdAndIsDeletedFalse(hostelId)
                 : studentRepository.findAll();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(out))) {
@@ -58,7 +58,7 @@ public class ReportExportServiceImpl implements ReportExportService {
     @Override
     public ByteArrayInputStream generateStudentReportPdf(Long hostelId) throws IOException {
         List<Student> students = (hostelId != null) 
-                ? studentRepository.findByBedRoomHostelIdAndIsDeletedFalse(hostelId)
+                ? studentRepository.findByHostelIdAndIsDeletedFalse(hostelId)
                 : studentRepository.findAll();
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();

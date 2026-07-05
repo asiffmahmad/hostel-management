@@ -27,6 +27,8 @@ interface MonthlyData {
 
 interface FinancialReport {
   totalRevenue: number;
+  expectedRevenue: number;
+  collectedRevenue: number;
   totalExpenses: number;
   netProfit: number;
   monthlyData: MonthlyData[];
@@ -38,7 +40,7 @@ export default function FinancialDashboard() {
   const [months, setMonths] = useState<number>(6); // 1, 3, 6
 
   // Strict check - only OWNER
-  if (user?.roles?.[0] !== 'ROLE_OWNER') {
+  if (!user?.roles?.some(r => r === 'ROLE_OWNER' || r === 'ROLE_ADMIN')) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">You do not have access to financial reports.</p>
@@ -120,40 +122,54 @@ export default function FinancialDashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="glass-panel hover:shadow-md transition-shadow">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-panel hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Expected Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-3xl font-bold text-green-600">₹{report?.totalRevenue?.toFixed(2) || 0}</div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-600">₹{(report?.expectedRevenue || 0).toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground mt-1">Total rent from all students</p>
           </CardContent>
         </Card>
 
-        <Card className="glass-panel hover:shadow-md transition-shadow">
+        <Card className="glass-panel hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Collected Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg sm:text-2xl font-bold text-green-600">₹{(report?.collectedRevenue || 0).toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground mt-1">Actual payments received</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel hover:shadow-md transition-shadow border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Expenses</CardTitle>
             <DollarSign className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-3xl font-bold text-red-600">₹{report?.totalExpenses?.toFixed(2) || 0}</div>
+            <div className="text-lg sm:text-2xl font-bold text-red-600">₹{(report?.totalExpenses || 0).toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground mt-1">All expenses combined</p>
           </CardContent>
         </Card>
 
-        <Card className={`glass-panel hover:shadow-md transition-shadow`}>
+        <Card className={`glass-panel hover:shadow-md transition-shadow border-l-4 ${(report?.netProfit || 0) >= 0 ? 'border-l-emerald-500' : 'border-l-orange-500'}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Net Profit/Loss</CardTitle>
             {report && report.netProfit >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
+              <TrendingDown className="h-4 w-4 text-orange-500" />
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-xl sm:text-3xl font-bold ${getProfitColor(report?.netProfit || 0)}`}>
-              ₹{report?.netProfit?.toFixed(2) || 0}
+            <div className={`text-lg sm:text-2xl font-bold ${getProfitColor(report?.netProfit || 0)}`}>
+              ₹{(report?.netProfit || 0).toLocaleString('en-IN')}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Collected − Expenses</p>
           </CardContent>
         </Card>
       </div>

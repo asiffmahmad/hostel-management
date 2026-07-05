@@ -153,6 +153,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         studentDTO.setStudentId("STU" + System.currentTimeMillis());
         studentDTO.setMonthlyRent(room.getBaseRent() != null ? room.getBaseRent() : 5000.0);
         studentDTO.setAdvanceDeposit(0.0);
+        studentDTO.setHostelId(hostel.getId());
         // Persist student
         studentService.createStudent(studentDTO);
         // Update admission status

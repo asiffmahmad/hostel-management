@@ -14,11 +14,13 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpecificationExecutor<Payment> {
 
-    @EntityGraph(attributePaths = {"student", "student.bed", "student.bed.room", "student.bed.room.hostel"})
+    @EntityGraph(attributePaths = {"student", "student.bed", "student.bed.room", "student.hostel"})
+    @Query("SELECT p FROM Payment p WHERE p.isDeleted = false")
     List<Payment> findAll();
 
     @EntityGraph(attributePaths = {"student"})
-    List<Payment> findByStudentId(Long studentId);
+    @Query("SELECT p FROM Payment p WHERE p.student.id = :studentId AND p.isDeleted = false")
+    List<Payment> findByStudentId(@Param("studentId") Long studentId);
 
     Optional<Payment> findByUtrNumber(String utrNumber);
 
@@ -26,32 +28,34 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpec
 
     boolean existsByUtrNumberAndIdNot(String utrNumber, Long id);
 
-    @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM Payment p WHERE p.status = :status")
+    @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM Payment p WHERE p.status = :status AND p.isDeleted = false")
     Double sumAmountByStatus(@Param("status") String status);
 
-    @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM Payment p WHERE p.student.bed.room.hostel.id = :hostelId AND p.status = :status")
+    @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM Payment p WHERE p.student.hostel.id = :hostelId AND p.status = :status AND p.isDeleted = false")
     Double sumAmountByHostelIdAndStatus(@Param("hostelId") Long hostelId, @Param("status") String status);
 
     @EntityGraph(attributePaths = {"student"})
-    @Query("SELECT p FROM Payment p WHERE p.student.id = :studentId ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Payment p WHERE p.student.id = :studentId AND p.isDeleted = false ORDER BY p.createdAt DESC")
     List<Payment> findByStudentIdOrderByCreatedAtDesc(@Param("studentId") Long studentId);
 
-    @EntityGraph(attributePaths = {"student", "student.bed", "student.bed.room", "student.bed.room.hostel"})
-    @Query("SELECT p FROM Payment p WHERE p.student.bed.room.hostel.id = :hostelId ORDER BY p.createdAt DESC")
-    List<Payment> findByStudentBedRoomHostelIdOrderByCreatedAtDesc(@Param("hostelId") Long hostelId);
+    @EntityGraph(attributePaths = {"student", "student.bed", "student.bed.room", "student.hostel"})
+    @Query("SELECT p FROM Payment p WHERE p.student.hostel.id = :hostelId AND p.isDeleted = false ORDER BY p.createdAt DESC")
+    List<Payment> findByStudentHostelIdOrderByCreatedAtDesc(@Param("hostelId") Long hostelId);
 
     @EntityGraph(attributePaths = {"student"})
+    @Query("SELECT p FROM Payment p WHERE p.isDeleted = false ORDER BY p.createdAt DESC LIMIT 5")
     List<Payment> findTop5ByOrderByCreatedAtDesc();
 
     @EntityGraph(attributePaths = {"student"})
-    List<Payment> findTop5ByStudentBedRoomHostelIdOrderByCreatedAtDesc(Long hostelId);
+    @Query("SELECT p FROM Payment p WHERE p.student.hostel.id = :hostelId AND p.isDeleted = false ORDER BY p.createdAt DESC LIMIT 5")
+    List<Payment> findTop5ByStudentHostelIdOrderByCreatedAtDesc(@Param("hostelId") Long hostelId);
 
     @Query("SELECT p.month as month, p.year as year, SUM(p.amount) as total " +
-           "FROM Payment p WHERE p.status = 'PAID' GROUP BY p.year, p.month")
+           "FROM Payment p WHERE p.status = 'PAID' AND p.isDeleted = false GROUP BY p.year, p.month")
     List<Object[]> getRevenueData();
 
     @Query("SELECT p.month as month, p.year as year, SUM(p.amount) as total " +
-           "FROM Payment p WHERE p.status = 'PAID' AND p.student.bed.room.hostel.id = :hostelId " +
+           "FROM Payment p WHERE p.status = 'PAID' AND p.student.hostel.id = :hostelId AND p.isDeleted = false " +
            "GROUP BY p.year, p.month")
     List<Object[]> getRevenueDataByHostelId(@Param("hostelId") Long hostelId);
 }

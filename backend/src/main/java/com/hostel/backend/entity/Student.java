@@ -118,6 +118,10 @@ public class Student extends BaseEntity {
     @JoinColumn(name = "bed_id")
     private Bed bed;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hostel_id")
+    private Hostel hostel;
+
     @Column(name = "monthly_rent", nullable = false)
     @Builder.Default
     private Double monthlyRent = 0.0;

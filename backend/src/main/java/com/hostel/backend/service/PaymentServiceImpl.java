@@ -97,7 +97,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<PaymentDTO> getAllPayments(Long hostelId) {
         if (hostelId != null) {
-            return paymentRepository.findByStudentBedRoomHostelIdOrderByCreatedAtDesc(hostelId).stream()
+            return paymentRepository.findByStudentHostelIdOrderByCreatedAtDesc(hostelId).stream()
                     .map(paymentMapper::toDto)
                     .collect(Collectors.toList());
         }

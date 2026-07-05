@@ -23,7 +23,7 @@ public class DashboardController {
     }
 
     @GetMapping("/financial")
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
     public ResponseEntity<com.hostel.backend.dto.FinancialReportDTO> getFinancialReport(
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "6") int months,
             @org.springframework.web.bind.annotation.RequestParam(required = false) Long hostelId) {
