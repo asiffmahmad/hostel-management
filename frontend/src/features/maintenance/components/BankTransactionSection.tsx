@@ -23,6 +23,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [transactionType, setTransactionType] = useState('');
   const [globalFilter, setGlobalFilter] = useState('');
+  const [isMapped, setIsMapped] = useState('');
   
   // Grid State
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -40,6 +41,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
       if (year) params.append('year', year);
       if (transactionType) params.append('transactionType', transactionType);
       if (globalFilter) params.append('globalSearch', globalFilter);
+      if (isMapped) params.append('isMapped', isMapped);
       
       params.append('page', pagination.pageIndex.toString());
       params.append('size', pagination.pageSize.toString());
@@ -61,7 +63,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
 
   useEffect(() => {
     fetchTransactions();
-  }, [pagination.pageIndex, pagination.pageSize, sorting, month, year, transactionType]);
+  }, [pagination.pageIndex, pagination.pageSize, sorting, month, year, transactionType, isMapped]);
   
   // Debounce global filter
   useEffect(() => {
@@ -79,6 +81,7 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
       if (year) params.append('year', year);
       if (transactionType) params.append('transactionType', transactionType);
       if (globalFilter) params.append('globalSearch', globalFilter);
+      if (isMapped) params.append('isMapped', isMapped);
       
       // In a real app we would download blob
       toast({ title: `Exporting to ${format.toUpperCase()}...` });
@@ -174,6 +177,21 @@ export function BankTransactionSection({ onMapPayment }: { onMapPayment: (txn: a
                   <option value="">All</option>
                   <option value="CREDIT">Credit</option>
                   <option value="DEBIT">Debit</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Mapped Status</label>
+                <select
+                  className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                  value={isMapped}
+                  onChange={e => {
+                    setIsMapped(e.target.value);
+                    setPagination(p => ({...p, pageIndex: 0}));
+                  }}
+                >
+                  <option value="">All</option>
+                  <option value="true">Mapped</option>
+                  <option value="false">Unmapped</option>
                 </select>
               </div>
               <div className="space-y-1.5 min-w-[250px]">

@@ -24,7 +24,8 @@ import {
   MessageSquareWarning,
   Receipt,
   Search,
-  PieChart
+  PieChart,
+  Link as LinkIcon
 } from 'lucide-react';
 import HostelFilter from '@/components/HostelFilter';
 import api from '@/services/api';
@@ -96,6 +97,7 @@ const AppLayout = () => {
     { name: 'Student Mapping', path: '/maintenance/mapping', icon: Map, menuKey: 'MENU_STUDENT_MAPPING_ENABLED' },
     { name: 'Search Transactions', path: '/maintenance/search-transactions', icon: Search, menuKey: 'MENU_SEARCH_TRANSACTIONS_ENABLED' },
     { name: 'Payment Check', path: '/maintenance/payment-check', icon: Landmark, menuKey: 'MENU_PAYMENT_CHECK_ENABLED' },
+    { name: 'Public Links', path: '/maintenance/public-links', icon: LinkIcon, menuKey: 'MENU_PUBLIC_LINKS_ENABLED' },
     { name: 'System Settings', path: '/maintenance/settings', icon: Settings, menuKey: 'MENU_SYSTEM_SETTINGS_ENABLED' },
     { name: 'Menu Settings', path: '/maintenance/menu-settings', icon: Settings, ownerOnly: true },
   ];

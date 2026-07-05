@@ -47,6 +47,17 @@ public class BankTransactionSpecification {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("transactionDate"), filter.getEndDate()));
             }
 
+            if (filter.getIsMapped() != null) {
+                if (filter.getIsMapped()) {
+                    predicates.add(criteriaBuilder.isTrue(root.get("isMapped")));
+                } else {
+                    predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.isFalse(root.get("isMapped")),
+                        criteriaBuilder.isNull(root.get("isMapped"))
+                    ));
+                }
+            }
+
             if (filter.getGlobalSearch() != null && !filter.getGlobalSearch().isBlank()) {
                 String searchPattern = "%" + filter.getGlobalSearch().toUpperCase() + "%";
                 

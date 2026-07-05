@@ -29,6 +29,7 @@ const PaymentCheck = lazy(() => import('@/features/maintenance/PaymentCheck'));
 const ExpensesDashboard = lazy(() => import('@/features/expenses/ExpensesDashboard'));
 const MenuSettings = lazy(() => import('@/features/maintenance/MenuSettings'));
 const SearchTransactions = lazy(() => import('@/features/maintenance/SearchTransactions'));
+const PublicLinks = lazy(() => import('@/features/maintenance/PublicLinks'));
 
 // Error Pages
 const NotFound = () => <div className="flex items-center justify-center h-screen text-2xl font-semibold">404 - Page Not Found</div>;
@@ -76,6 +77,9 @@ const AppRoutes = () => {
             
             {/* Admin Admissions Route */}
             <Route path="/admin/admissions" element={<AdminAdmissions />} />
+            
+            {/* Public Links Page */}
+            <Route path="/maintenance/public-links" element={<PublicLinks />} />
           </Route>
         </Route>
         

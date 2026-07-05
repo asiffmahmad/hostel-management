@@ -16,13 +16,12 @@ public class BankTransactionGridFilterDTO {
     private LocalDate startDate;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate endDate;
+    private String globalSearch;
+    private Boolean isMapped;
     
     // Pagination and Sorting
     private int page = 0;
     private int size = 10;
     private String sortBy = "id";
     private String sortDir = "desc";
-    
-    // Global Search
-    private String globalSearch;
 }

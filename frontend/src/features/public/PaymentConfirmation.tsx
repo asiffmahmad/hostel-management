@@ -3,10 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, User } from 'lucide-react';
+import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, User, Building2 } from 'lucide-react';
 import api from '@/services/api';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function PaymentConfirmation() {
   const { toast } = useToast();
@@ -27,10 +26,19 @@ export default function PaymentConfirmation() {
   const [selectedMonth, setSelectedMonth] = useState(monthNames[currentDate.getMonth()]);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
 
+  const currentPayment = student?.payments?.find(
+    (p: any) => p.month === selectedMonth && p.year === selectedYear
+  );
+  
+  const isAlreadyPaid = currentPayment?.status === 'PAID' && currentPayment?.dueAmount <= 0;
+
+  const [errorMsg, setErrorMsg] = useState('');
+
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
     if (!phone || phone.length !== 10) {
-      toast({ title: 'Please enter a valid 10-digit phone number', variant: 'destructive' });
+      setErrorMsg('Please enter a valid 10-digit phone number.');
       return;
     }
 
@@ -41,24 +49,24 @@ export default function PaymentConfirmation() {
       setAmount(data.monthlyRent?.toString() || '');
       setStep(2);
     } catch (err: any) {
-      toast({ 
-        title: 'Student not found', 
-        description: err.response?.data?.message || 'No active student matches this phone number.',
-        variant: 'destructive' 
-      });
+      setErrorMsg(err.response?.data?.message || 'No active student matches this phone number.');
     } finally {
       setLoading(false);
     }
   };
 
+  const [utrErrorMsg, setUtrErrorMsg] = useState('');
+
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!utrNumber) {
-      toast({ title: 'Please enter the UTR Number', variant: 'destructive' });
+    setUtrErrorMsg('');
+    const cleanUtr = utrNumber.trim();
+    if (!cleanUtr || cleanUtr.length !== 12 || !/^[A-Z0-9]{12}$/.test(cleanUtr)) {
+      setUtrErrorMsg('Please enter a valid 12-character UTR number (letters and numbers only).');
       return;
     }
     if (!amount || Number(amount) <= 0) {
-      toast({ title: 'Please enter a valid amount', variant: 'destructive' });
+      setUtrErrorMsg('Please enter a valid amount.');
       return;
     }
 
@@ -66,18 +74,14 @@ export default function PaymentConfirmation() {
       setLoading(true);
       await api.post('/public/payments/confirm', {
         studentId: student.id,
-        utrNumber,
+        utrNumber: cleanUtr,
         amount: Number(amount),
         month: selectedMonth,
         year: selectedYear
       });
       setStep(3);
     } catch (err: any) {
-      toast({ 
-        title: 'Failed to confirm payment', 
-        description: err.response?.data?.message || 'An error occurred.',
-        variant: 'destructive' 
-      });
+      setUtrErrorMsg(err.response?.data?.message || 'Failed to confirm payment.');
     } finally {
       setLoading(false);
     }
@@ -102,10 +106,10 @@ export default function PaymentConfirmation() {
       <div className="w-full max-w-lg z-10">
         <div className="text-center mb-8">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 ring-1 ring-primary/20 shadow-sm">
-            <ShieldCheck size={32} />
+            <Building2 size={32} />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Payment Confirmation</h1>
-          <p className="text-muted-foreground mt-2 text-lg">Verify your details and submit your UTR number</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Sri Sai Ram Ladies Hostel</h1>
+          <p className="text-muted-foreground mt-2 text-lg">Payment Confirmation: Verify your details and submit your UTR number</p>
         </div>
 
         {step === 1 && (
@@ -122,12 +126,13 @@ export default function PaymentConfirmation() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                       placeholder="e.g. 9876543210"
-                      className="pl-10 h-12 text-lg bg-white/50 focus:bg-white"
+                      className={`pl-10 h-12 text-lg bg-white/50 focus:bg-white ${errorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       maxLength={10}
                     />
                   </div>
+                  {errorMsg && <p className="text-sm text-red-500 mt-1 font-medium">{errorMsg}</p>}
                 </div>
                 <Button 
                   type="submit" 
@@ -179,63 +184,89 @@ export default function PaymentConfirmation() {
               <form onSubmit={handleConfirm} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Month</label>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="h-11 bg-white/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {monthNames.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium text-slate-700">Month</label>
+                    <select 
+                      value={selectedMonth} 
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="flex h-11 w-full items-center justify-between rounded-md border border-input bg-white/50 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      {monthNames.map((m, index) => {
+                        // Restrict future months if current year is selected
+                        if (selectedYear === currentDate.getFullYear().toString() && index > currentDate.getMonth()) {
+                          return null;
+                        }
+                        return <option key={m} value={m}>{m}</option>;
+                      })}
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Year</label>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                      <SelectTrigger className="h-11 bg-white/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({length: 5}, (_, i) => currentDate.getFullYear() - 1 + i).map(y => (
-                          <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium text-slate-700">Year</label>
+                    <select 
+                      value={selectedYear} 
+                      onChange={(e) => {
+                        const newYear = e.target.value;
+                        setSelectedYear(newYear);
+                        // If they switch to current year and current month is future, reset month to current
+                        if (newYear === currentDate.getFullYear().toString()) {
+                           const currentMonthIdx = monthNames.indexOf(selectedMonth);
+                           if (currentMonthIdx > currentDate.getMonth()) {
+                             setSelectedMonth(monthNames[currentDate.getMonth()]);
+                           }
+                        }
+                      }}
+                      className="flex h-11 w-full items-center justify-between rounded-md border border-input bg-white/50 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <option value={(currentDate.getFullYear() - 1).toString()}>{(currentDate.getFullYear() - 1).toString()}</option>
+                      <option value={currentDate.getFullYear().toString()}>{currentDate.getFullYear().toString()}</option>
+                      {/* Do not allow future years */}
+                    </select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Amount Paid (₹)</label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      placeholder="Amount"
-                      className="pl-10 h-11 bg-white/50"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
+                {isAlreadyPaid ? (
+                  <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-xl flex flex-col items-center justify-center text-center mt-2">
+                    <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />
+                    <h3 className="text-2xl font-bold mb-2">Fee Already Paid!</h3>
+                    <p className="text-base text-green-700/80">
+                      Your fee for <strong>{selectedMonth} {selectedYear}</strong> has already been successfully paid. Select a different month to make a new payment.
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">Amount (₹)</label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 5000"
+                        className="h-11 bg-white/50"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        min={1}
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">UTR / Reference Number</label>
-                  <Input
-                    placeholder="Enter 12-digit UTR from your bank"
-                    className="h-11 font-mono text-sm bg-white/50 uppercase"
-                    value={utrNumber}
-                    onChange={(e) => setUtrNumber(e.target.value.toUpperCase())}
-                  />
-                  <p className="text-xs text-muted-foreground">You can find this on your payment receipt (e.g. Google Pay, PhonePe).</p>
-                </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">UTR / Reference Number</label>
+                      <Input
+                        placeholder="Enter 12-digit UTR from your bank"
+                        className={`h-11 font-mono text-sm bg-white/50 uppercase ${utrErrorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        value={utrNumber}
+                        onChange={(e) => setUtrNumber(e.target.value.toUpperCase().slice(0, 12))}
+                        maxLength={12}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">You can find this on your payment receipt (e.g. Google Pay, PhonePe).</p>
+                      {utrErrorMsg && <p className="text-sm text-red-500 mt-1 font-medium">{utrErrorMsg}</p>}
+                    </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-base font-medium shadow-md shadow-primary/20" 
-                  disabled={loading}
-                >
-                  {loading ? 'Submitting...' : 'Confirm Payment'}
-                </Button>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-lg shadow-md"
+                      disabled={loading}
+                    >
+                      {loading ? 'Submitting...' : 'Confirm Payment'}
+                    </Button>
+                  </>
+                )}
               </form>
             </CardContent>
           </Card>
@@ -257,8 +288,8 @@ export default function PaymentConfirmation() {
                 <p className="text-sm text-slate-500 mb-1">UTR Number</p>
                 <p className="font-mono font-medium text-slate-900 tracking-wider">{utrNumber}</p>
               </div>
-              <p className="text-sm text-muted-foreground mt-4 px-4">
-                The transaction is currently pending verification. The admin will approve it shortly after verifying with the bank statement.
+              <p className="text-sm text-green-600 font-medium mt-4 px-4 bg-green-50/50 p-3 rounded-lg border border-green-100">
+                ✅ Payment successfully verified against bank records and applied to your account!
               </p>
             </CardContent>
             <CardFooter className="justify-center pt-2">

@@ -19,13 +19,16 @@ import org.springframework.web.bind.annotation.*;
 
 import com.hostel.backend.repository.StudentRepository;
 import com.hostel.backend.repository.PaymentRepository;
+import com.hostel.backend.repository.BankTransactionRepository;
 import com.hostel.backend.entity.Payment;
 import com.hostel.backend.entity.Student;
+import com.hostel.backend.entity.BankTransaction;
 import com.hostel.backend.dto.PublicPaymentConfirmRequest;
 import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/public")
@@ -41,6 +44,7 @@ public class PublicController {
     private final RoomRepository roomRepository;
     private final StudentRepository studentRepository;
     private final PaymentRepository paymentRepository;
+    private final BankTransactionRepository bankTransactionRepository;
 
     @GetMapping("/hostels")
     public ResponseEntity<List<HostelDTO>> getHostels() {
@@ -97,16 +101,30 @@ public class PublicController {
 
     @GetMapping("/students/lookup")
     public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone) {
-        Optional<Student> studentOpt = studentRepository.findByPhoneAndIsDeletedFalse(phone);
-        if (studentOpt.isEmpty()) {
+        String phoneHash = com.hostel.backend.security.EncryptionContext.hash(phone);
+        List<Student> students = studentRepository.findByPhoneHashAndIsDeletedFalse(phoneHash);
+        if (students == null || students.isEmpty()) {
             return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number"));
         }
         
-        Student student = studentOpt.get();
+        // If there are multiple, just take the most recently added or first one for this demo
+        Student student = students.get(students.size() - 1);
+        
+        List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
+        List<Map<String, Object>> paymentSummary = existingPayments.stream().map(p -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("month", p.getMonth());
+            map.put("year", p.getYear());
+            map.put("status", p.getStatus());
+            map.put("dueAmount", p.getDueAmount());
+            return map;
+        }).toList();
+
         Map<String, Object> response = new HashMap<>();
         response.put("id", student.getId());
         response.put("name", student.getName());
         response.put("monthlyRent", student.getMonthlyRent());
+        response.put("payments", paymentSummary);
         
         if (student.getBed() != null && student.getBed().getRoom() != null) {
             response.put("roomNumber", student.getBed().getRoom().getRoomNumber());
@@ -127,6 +145,17 @@ public class PublicController {
             throw new IllegalArgumentException("UTR Number already exists. Payment might have been confirmed already.");
         }
         
+        Optional<BankTransaction> bankTxnOpt = bankTransactionRepository.findByUtrNumberAndIsDeletedFalse(request.getUtrNumber());
+        if (bankTxnOpt.isEmpty()) {
+            throw new IllegalArgumentException("UTR not found in bank records. Please check the UTR number or wait for the bank transaction to be imported by the admin.");
+        }
+        
+        BankTransaction bankTxn = bankTxnOpt.get();
+        if (bankTxn.getIsMapped()) {
+            throw new IllegalArgumentException("This UTR has already been mapped to another student's payment.");
+        }
+        
+        // At this point, the UTR is valid and unmapped. Map it!
         List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
         Optional<Payment> pendingPayment = existingPayments.stream()
                 .filter(p -> p.getMonth().equalsIgnoreCase(request.getMonth()) 
@@ -135,33 +164,35 @@ public class PublicController {
                         && p.getStatus().startsWith("PENDING"))
                 .findFirst();
                 
+        Payment payment;
         if (pendingPayment.isPresent()) {
-            Payment payment = pendingPayment.get();
-            payment.setUtrNumber(request.getUtrNumber());
-            payment.setStatus("PENDING_VERIFICATION");
-            
-            // if amount paid is >= expected amount, we set dueAmount correctly later, 
-            // for now, we just update the amount they confirmed to have paid.
-            payment.setAmount(request.getAmount());
-            if (payment.getExpectedAmount() != null) {
-                payment.setDueAmount(Math.max(0, payment.getExpectedAmount() - request.getAmount()));
-            }
-            payment.setPaymentSource("PUBLIC_FORM");
-            paymentRepository.save(payment);
+            payment = pendingPayment.get();
         } else {
-            Payment newPayment = new Payment();
-            newPayment.setStudent(student);
-            newPayment.setMonth(request.getMonth().toUpperCase());
-            newPayment.setYear(request.getYear());
-            newPayment.setAmount(request.getAmount());
-            newPayment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
-            newPayment.setDueAmount(Math.max(0, newPayment.getExpectedAmount() - request.getAmount()));
-            newPayment.setUtrNumber(request.getUtrNumber());
-            newPayment.setStatus("PENDING_VERIFICATION");
-            newPayment.setPaymentSource("PUBLIC_FORM");
-            paymentRepository.save(newPayment);
+            payment = new Payment();
+            payment.setStudent(student);
+            payment.setMonth(request.getMonth().toUpperCase());
+            payment.setYear(request.getYear());
+            payment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
         }
         
-        return ResponseEntity.ok(new MessageResponse("Payment details submitted successfully. Pending verification."));
+        payment.setUtrNumber(request.getUtrNumber());
+        // Map to bankTxn
+        payment.setAmount(bankTxn.getAmount().doubleValue());
+        if (payment.getExpectedAmount() != null) {
+            payment.setDueAmount(Math.max(0, payment.getExpectedAmount() - payment.getAmount()));
+        }
+        payment.setStatus("PAID"); // Automatically paid since it matched BankTransaction!
+        payment.setPaymentSource("PUBLIC_FORM");
+        payment = paymentRepository.save(payment);
+        
+        // Update BankTransaction to mark as mapped
+        bankTxn.setIsMapped(true);
+        bankTxn.setMappedStudentId(student.getId());
+        bankTxn.setMappedPaymentId(payment.getId());
+        bankTxn.setMappedAt(LocalDateTime.now());
+        bankTxn.setMappedBy("PUBLIC_FORM_AUTO");
+        bankTransactionRepository.save(bankTxn);
+        
+        return ResponseEntity.ok(new MessageResponse("Payment automatically verified and successful!"));
     }
 }

@@ -16,7 +16,7 @@ public interface StudentRepository extends JpaRepository<Student, Long>, org.spr
     
     boolean existsByStudentId(String studentId);
     
-    Optional<Student> findByPhoneAndIsDeletedFalse(String phone);
+    List<Student> findByPhoneHashAndIsDeletedFalse(String phoneHash);
     
     @EntityGraph(attributePaths = {"bed", "bed.room", "bed.room.hostel"})
     List<Student> findByIsDeletedFalse();
