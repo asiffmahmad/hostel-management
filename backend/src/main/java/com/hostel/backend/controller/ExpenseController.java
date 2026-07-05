@@ -25,11 +25,7 @@ public class ExpenseController {
         return new ResponseEntity<>(expenseService.createExpense(expenseDTO), HttpStatus.CREATED);
     }
 
-    @GetMapping("/hostel/{hostelId}")
-    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public ResponseEntity<List<ExpenseDTO>> getExpensesByHostelId(@PathVariable Long hostelId) {
-        return ResponseEntity.ok(expenseService.getExpensesByHostelId(hostelId));
-    }
+
 
     @GetMapping
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")

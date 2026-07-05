@@ -53,10 +53,7 @@ public class ExpenseControllerTest {
     @WithMockUser(roles = "OWNER")
     public void testExpenseLifecycle_Positive() throws Exception {
         // 1. Create Expense
-        String jsonPayload = String.format(
-            "{\"hostelId\":%d,\"category\":\"ELECTRICITY\",\"amount\":1500.0,\"expenseDate\":\"2024-01-15\",\"description\":\"January Bill\",\"recordedBy\":1}",
-            testHostelId
-        );
+        String jsonPayload = "{\"category\":\"ELECTRICITY\",\"amount\":1500.0,\"expenseDate\":\"2024-01-15\",\"description\":\"January Bill\",\"recordedBy\":1}";
 
         MvcResult createResult = mockMvc.perform(post("/api/expenses")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,11 +71,6 @@ public class ExpenseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
 
-        // 3. Get Expenses by Hostel ID
-        mockMvc.perform(get("/api/expenses/hostel/" + testHostelId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-
         // 4. Get Expense By ID
         mockMvc.perform(get("/api/expenses/" + expenseId))
                 .andExpect(status().isOk())
@@ -86,8 +78,8 @@ public class ExpenseControllerTest {
 
         // 5. Update Expense
         String updateJson = String.format(
-            "{\"id\":%d,\"hostelId\":%d,\"category\":\"WATER\",\"amount\":800.0,\"expenseDate\":\"2024-01-16\",\"description\":\"Water Bill\",\"recordedBy\":1}",
-            expenseId, testHostelId
+            "{\"id\":%d,\"category\":\"WATER\",\"amount\":800.0,\"expenseDate\":\"2024-01-16\",\"description\":\"Water Bill\",\"recordedBy\":1}",
+            expenseId
         );
         mockMvc.perform(put("/api/expenses/" + expenseId)
                         .contentType(MediaType.APPLICATION_JSON)

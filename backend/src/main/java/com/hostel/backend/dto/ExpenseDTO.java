@@ -10,8 +10,7 @@ import java.time.LocalDate;
 public class ExpenseDTO {
     private Long id;
 
-    @NotNull
-    private Long hostelId;
+
 
     @NotBlank
     private String category;

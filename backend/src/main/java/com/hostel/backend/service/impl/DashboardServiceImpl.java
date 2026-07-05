@@ -147,9 +147,7 @@ public class DashboardServiceImpl implements DashboardService {
                 ? paymentRepository.getRevenueDataByHostelId(hostelId)
                 : paymentRepository.getRevenueData();
                 
-        List<Object[]> rawExpenses = hostelId != null
-                ? expenseRepository.getExpenseDataByHostelId(hostelId)
-                : expenseRepository.getExpenseData();
+        List<Object[]> rawExpenses = expenseRepository.getExpenseData();
                 
         // Map: Month Year -> FinancialData
         Map<String, MonthlyFinancialData> dataMap = new HashMap<>();

@@ -48,9 +48,9 @@ const Dashboard = () => {
   });
 
   const { data: expenses } = useQuery<Expense[]>({
-    queryKey: ['expenses', selectedHostelId],
+    queryKey: ['expenses'],
     queryFn: async () => {
-      const res = await getExpenses(selectedHostelId ? Number(selectedHostelId) : undefined);
+      const res = await getExpenses();
       return res.data;
     },
   });
@@ -70,9 +70,13 @@ const Dashboard = () => {
 
   if (isOwner) {
     kpiCards.push(
-      { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue || 0}`, icon: Wallet, color: 'text-purple-500' },
-      { title: 'Total Expenses', value: `₹${totalExpenses.toFixed(2)}`, icon: Wallet, color: 'text-red-500' }
+      { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue || 0}`, icon: Wallet, color: 'text-purple-500' }
     );
+    if (!selectedHostelId) {
+      kpiCards.push(
+        { title: 'Total Expenses', value: `₹${totalExpenses.toFixed(2)}`, icon: Wallet, color: 'text-red-500' }
+      );
+    }
   }
 
   if (isLoading) {

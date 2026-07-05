@@ -17,10 +17,7 @@ public class ExpenseMapper {
         ExpenseDTO dto = new ExpenseDTO();
         dto.setId(entity.getId());
         
-        if (entity.getHostel() != null) {
-            dto.setHostelId(entity.getHostel().getId());
-        }
-        
+
         dto.setCategory(entity.getCategory());
         dto.setAmount(entity.getAmount());
         dto.setExpenseDate(entity.getExpenseDate());
@@ -41,12 +38,6 @@ public class ExpenseMapper {
 
         Expense entity = new Expense();
         entity.setId(dto.getId());
-
-        if (dto.getHostelId() != null) {
-            Hostel hostel = new Hostel();
-            hostel.setId(dto.getHostelId());
-            entity.setHostel(hostel);
-        }
 
         entity.setCategory(dto.getCategory());
         entity.setAmount(dto.getAmount());

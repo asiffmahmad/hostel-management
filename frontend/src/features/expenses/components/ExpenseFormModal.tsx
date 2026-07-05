@@ -8,9 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import type { Expense, Hostel } from '@/types';
-import { useHostel } from '@/app/HostelContext';
-import api from '@/services/api';
+import type { Expense } from '@/types';
 
 const expenseCategories = [
   'Vegetables',
@@ -21,7 +19,6 @@ const expenseCategories = [
 ] as const;
 
 const expenseSchema = z.object({
-  hostelId: z.coerce.number().optional(),
   category: z.string().min(1, 'Category is required'),
   amount: z.coerce.number().min(1, 'Amount must be > 0'),
   expenseDate: z.string().min(1, 'Date is required'),
@@ -41,20 +38,10 @@ interface ExpenseFormModalProps {
 
 export const ExpenseFormModal = ({ isOpen, onClose, initialData }: ExpenseFormModalProps) => {
   const queryClient = useQueryClient();
-  const { selectedHostelId } = useHostel();
-
-  const { data: hostels } = useQuery<Hostel[]>({
-    queryKey: ['hostels'],
-    queryFn: async () => {
-      const res = await api.get('/hostels');
-      return res.data;
-    },
-  });
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
-      hostelId: initialData?.hostelId || (selectedHostelId ? Number(selectedHostelId) : undefined),
       category: initialData?.category || 'Miscellaneous Bills',
       amount: initialData?.amount || 0,
       expenseDate: initialData?.expenseDate || new Date().toISOString().split('T')[0],
@@ -66,7 +53,6 @@ export const ExpenseFormModal = ({ isOpen, onClose, initialData }: ExpenseFormMo
   React.useEffect(() => {
     if (isOpen) {
       form.reset({
-        hostelId: initialData?.hostelId || (selectedHostelId ? Number(selectedHostelId) : undefined),
         category: initialData?.category || 'Miscellaneous Bills',
         amount: initialData?.amount || 0,
         expenseDate: initialData?.expenseDate || new Date().toISOString().split('T')[0],
@@ -78,12 +64,8 @@ export const ExpenseFormModal = ({ isOpen, onClose, initialData }: ExpenseFormMo
 
   const mutation = useMutation({
     mutationFn: async (data: ExpenseFormValues) => {
-      const finalHostelId = data.hostelId || Number(selectedHostelId);
-      if (!finalHostelId) throw new Error("Please select a hostel");
-
       const payload: Expense = {
         ...data,
-        hostelId: finalHostelId,
         recordedBy: 1, // Hardcoded admin user for now as per constraints
       };
       
@@ -101,11 +83,6 @@ export const ExpenseFormModal = ({ isOpen, onClose, initialData }: ExpenseFormMo
   });
 
   const onSubmit = (data: ExpenseFormValues) => {
-    const finalHostelId = data.hostelId || Number(selectedHostelId);
-    if (!finalHostelId) {
-      form.setError('hostelId', { type: 'manual', message: 'Hostel selection is required' });
-      return;
-    }
     mutation.mutate(data);
   };
 
@@ -118,30 +95,6 @@ export const ExpenseFormModal = ({ isOpen, onClose, initialData }: ExpenseFormMo
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             
-            <FormField
-              control={form.control}
-              name="hostelId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hostel</FormLabel>
-                  <FormControl>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
-                      value={field.value || ''}
-                      disabled={!!initialData} // Usually can't change hostel after creation, but disable just in case
-                    >
-                      <option value="" disabled>Select a hostel...</option>
-                      {hostels?.map(h => (
-                        <option key={h.id} value={h.id}>{h.name}</option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="category"

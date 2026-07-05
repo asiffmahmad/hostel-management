@@ -14,9 +14,7 @@ import java.time.LocalDate;
 @EqualsAndHashCode(callSuper = true)
 public class Expense extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hostel_id", nullable = false)
-    private Hostel hostel;
+    // Expense is now global, no hostel association.
 
     @Column(nullable = false)
     private String category;

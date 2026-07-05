@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getPending, approve, reject, updateAdmission } from '@/services/adminAdmission';
 import { toast } from 'react-hot-toast';
 import type { AdmissionRequestResponseDTO } from '@/types';
@@ -28,7 +27,8 @@ const AdminAdmissions: React.FC = () => {
   const [pending, setPending] = useState<AdmissionRequestResponseDTO[]>([]);
   const [editingAdmission, setEditingAdmission] = useState<AdmissionRequestResponseDTO | null>(null);
   const [editFormData, setEditFormData] = useState<any>({});
-  const navigate = useNavigate();
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const fetchPending = async () => {
     try {
@@ -53,12 +53,22 @@ const AdminAdmissions: React.FC = () => {
     }
   };
 
-  const handleReject = async (id: number) => {
-    const reason = prompt('Enter rejection reason');
-    if (!reason) return;
+  const openRejectDialog = (id: number) => {
+    setRejectingId(id);
+    setRejectReason('');
+  };
+
+  const handleReject = async () => {
+    if (!rejectingId) return;
+    if (!rejectReason.trim()) {
+      toast.error('Please enter a rejection reason');
+      return;
+    }
     try {
-      await reject(id, reason);
+      await reject(rejectingId, rejectReason.trim());
       toast.success('Admission successfully rejected!');
+      setRejectingId(null);
+      setRejectReason('');
       fetchPending();
     } catch (e) {
       toast.error('Reject failed');
@@ -103,7 +113,7 @@ const AdminAdmissions: React.FC = () => {
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow>
-                <TableHead>Applicant Details</TableHead>
+                <TableHead>Applicant</TableHead>
                 <TableHead>Contact Info</TableHead>
                 <TableHead>Aadhaar</TableHead>
                 <TableHead>Hostel & Room</TableHead>
@@ -166,26 +176,26 @@ const AdminAdmissions: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-2 opacity-100 sm:opacity-80 group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleApprove(p)}
                           className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 hover:text-green-700"
                         >
                           <Check size={16} className="mr-1" /> Approve
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(p)}
                           className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Edit2 size={16} className="mr-1" /> Edit
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
-                          onClick={() => handleReject(p.id!)}
+                          onClick={() => openRejectDialog(p.id!)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                           <X size={16} className="mr-1" /> Reject
@@ -207,9 +217,9 @@ const AdminAdmissions: React.FC = () => {
              </div>
           ) : (
             pending.map(p => (
-              <div key={p.id} className="bg-card border rounded-lg p-4 space-y-4 shadow-sm relative">
+              <div key={p.id} className="bg-card border rounded-xl p-4 space-y-3 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10 border">
+                  <Avatar className="h-10 w-10 border shrink-0">
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {p.studentName?.substring(0, 2).toUpperCase() || <User size={16} />}
                     </AvatarFallback>
@@ -218,45 +228,53 @@ const AdminAdmissions: React.FC = () => {
                     <div className="font-semibold text-base truncate">{p.studentName}</div>
                     <div className="text-xs text-muted-foreground">ID: #{p.id}</div>
                   </div>
+                  <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 text-xs shrink-0">
+                    Pending
+                  </Badge>
                 </div>
 
-                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-sm border-t pt-3">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone size={14} />
+                    <Phone size={13} />
                     <span className="truncate">{p.phone}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Building size={14} />
-                    <span className="truncate font-medium">{p.hostelCode}</span>
+                    <Building size={13} />
+                    <span className="truncate font-medium text-foreground">{p.hostelCode}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <BedDouble size={14} />
-                    <span className="truncate">Room {p.roomNumber}</span>
+                  <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                    <BedDouble size={13} />
+                    <span>Room {p.roomNumber}</span>
                   </div>
+                  {p.aadhaarNumber && (
+                    <div className="col-span-2 font-mono text-xs text-muted-foreground">
+                      {p.aadhaarNumber?.replace(/(\d{4})/g, '$1 ').trim()}
+                    </div>
+                  )}
                 </div>
-                
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
-                  <Button 
-                    variant="ghost" 
+
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(p)}
-                    className="flex-1 text-slate-600 bg-slate-100"
+                    className="flex-1 text-slate-600 bg-slate-100 dark:bg-slate-800"
                   >
                     <Edit2 size={14} className="mr-1.5" /> Edit
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleApprove(p)}
                     className="flex-1 bg-green-500/10 text-green-700 border-green-500/30"
                   >
                     <Check size={14} className="mr-1.5" /> Approve
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
-                    onClick={() => handleReject(p.id!)}
-                    className="flex-1 text-red-600 bg-red-50"
+                    onClick={() => openRejectDialog(p.id!)}
+                    className="flex-1 text-red-600 bg-red-50 dark:bg-red-950/20"
                   >
                     <X size={14} className="mr-1.5" /> Reject
                   </Button>
@@ -267,8 +285,37 @@ const AdminAdmissions: React.FC = () => {
         </div>
       </div>
 
+      {/* Reject Dialog */}
+      <Dialog open={rejectingId !== null} onOpenChange={(open) => { if (!open) { setRejectingId(null); setRejectReason(''); } }}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Reject Admission</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <p className="text-sm text-muted-foreground">Please provide a reason for rejecting this admission request.</p>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Rejection Reason *</label>
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="Enter reason for rejection..."
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setRejectingId(null); setRejectReason(''); }}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={handleReject} disabled={!rejectReason.trim()}>
+              <X size={14} className="mr-1" /> Reject Admission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
       <Dialog open={!!editingAdmission} onOpenChange={(open) => !open && setEditingAdmission(null)}>
-        <DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-auto overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">Edit Admission Request</DialogTitle>
           </DialogHeader>
@@ -280,7 +327,7 @@ const AdminAdmissions: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Email</label>
-                <Input type="email" required value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
+                <Input type="email" value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Phone</label>
@@ -288,11 +335,11 @@ const AdminAdmissions: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Parent Phone</label>
-                <Input required pattern="^\d{10}$" title="Parent phone must be exactly 10 digits" value={editFormData.parentPhone || ''} onChange={e => setEditFormData({...editFormData, parentPhone: e.target.value})} />
+                <Input pattern="^\d{10}$" title="Parent phone must be exactly 10 digits" value={editFormData.parentPhone || ''} onChange={e => setEditFormData({...editFormData, parentPhone: e.target.value})} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Father's Name</label>
-                <Input required value={editFormData.fatherName || ''} onChange={e => setEditFormData({...editFormData, fatherName: e.target.value})} />
+                <Input value={editFormData.fatherName || ''} onChange={e => setEditFormData({...editFormData, fatherName: e.target.value})} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Aadhaar</label>
@@ -300,7 +347,7 @@ const AdminAdmissions: React.FC = () => {
               </div>
               <div className="col-span-1 sm:col-span-2 space-y-1.5">
                 <label className="text-sm font-medium">Address</label>
-                <textarea required value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2}></textarea>
+                <textarea value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2}></textarea>
               </div>
             </div>
             <DialogFooter className="mt-6">

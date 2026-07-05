@@ -8,7 +8,6 @@ public interface ExpenseService {
     ExpenseDTO createExpense(ExpenseDTO expenseDTO);
     ExpenseDTO updateExpense(Long id, ExpenseDTO expenseDTO);
     ExpenseDTO getExpenseById(Long id);
-    List<ExpenseDTO> getExpensesByHostelId(Long hostelId);
     List<ExpenseDTO> getAllExpenses();
     void deleteExpense(Long id);
 }

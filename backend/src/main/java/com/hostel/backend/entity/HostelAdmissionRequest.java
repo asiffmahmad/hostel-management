@@ -47,6 +47,7 @@ public class HostelAdmissionRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private AdmissionStatus status = AdmissionStatus.PENDING;
 
     @Column(name = "rejection_reason")

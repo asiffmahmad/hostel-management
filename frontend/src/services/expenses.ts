@@ -1,11 +1,8 @@
 import api from './api';
 import type { Expense } from '@/types';
 
-export const getExpenses = (hostelId?: number) => {
-  if (!hostelId) {
-    return api.get('/expenses');
-  }
-  return api.get(`/expenses/hostel/${hostelId}`);
+export const getExpenses = () => {
+  return api.get('/expenses');
 };
 
 export const getExpense = (id: number) => {

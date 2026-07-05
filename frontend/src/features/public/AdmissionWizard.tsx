@@ -143,8 +143,8 @@ const AdmissionWizard: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] overflow-y-auto bg-gray-50 py-4 sm:py-10 px-2 sm:px-4">
-      <div className="w-full max-w-3xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+    <div className="min-h-[100dvh] overflow-y-auto bg-gray-50 py-4 sm:py-10 px-2 sm:px-4">
+      <div className="w-full max-w-3xl mx-auto bg-white shadow-xl rounded-2xl overflow-visible">
         <div className="bg-primary px-4 sm:px-8 py-4 sm:py-6 text-white text-center">
           <h1 className="text-xl sm:text-2xl font-bold">sri sai ram ladies Hostel</h1>
           <p className="text-primary-foreground/80 text-sm mt-1">Complete the form below to submit your application.</p>

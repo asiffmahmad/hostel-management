@@ -7,7 +7,7 @@ import com.hostel.backend.entity.User;
 import com.hostel.backend.exception.ResourceNotFoundException;
 import com.hostel.backend.mapper.ExpenseMapper;
 import com.hostel.backend.repository.ExpenseRepository;
-import com.hostel.backend.repository.HostelRepository;
+import com.hostel.backend.repository.ExpenseRepository;
 import com.hostel.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,19 +20,15 @@ import java.util.stream.Collectors;
 public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenseRepository;
-    private final HostelRepository hostelRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
 
     @Override
     public ExpenseDTO createExpense(ExpenseDTO expenseDTO) {
-        Hostel hostel = hostelRepository.findById(expenseDTO.getHostelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Hostel not found"));
         User user = userRepository.findById(expenseDTO.getRecordedBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Expense expense = expenseMapper.toEntity(expenseDTO);
-        expense.setHostel(hostel);
         expense.setRecordedBy(user);
 
         Expense savedExpense = expenseRepository.save(expense);
@@ -43,12 +39,6 @@ public class ExpenseServiceImpl implements ExpenseService {
     public ExpenseDTO updateExpense(Long id, ExpenseDTO expenseDTO) {
         Expense existingExpense = expenseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-
-        if (expenseDTO.getHostelId() != null && !existingExpense.getHostel().getId().equals(expenseDTO.getHostelId())) {
-            Hostel hostel = hostelRepository.findById(expenseDTO.getHostelId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Hostel not found"));
-            existingExpense.setHostel(hostel);
-        }
 
         existingExpense.setCategory(expenseDTO.getCategory());
         existingExpense.setAmount(expenseDTO.getAmount());
@@ -67,12 +57,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         return expenseMapper.toDto(expense);
     }
 
-    @Override
-    public List<ExpenseDTO> getExpensesByHostelId(Long hostelId) {
-        return expenseRepository.findByHostelIdAndIsDeletedFalse(hostelId).stream()
-                .map(expenseMapper::toDto)
-                .collect(Collectors.toList());
-    }
+
 
     @Override
     public List<ExpenseDTO> getAllExpenses() {

@@ -29,17 +29,18 @@ const expenseCategories = [
 
 const ExpensesDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(undefined);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { selectedHostelId } = useHostel();
-
   const { data: expenses, isLoading } = useQuery<Expense[]>({
-    queryKey: ['expenses', selectedHostelId],
+    queryKey: ['expenses'],
     queryFn: async () => {
-      const res = await getExpenses(selectedHostelId ? Number(selectedHostelId) : undefined);
+      const res = await getExpenses();
       return res.data;
     },
   });
