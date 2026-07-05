@@ -79,6 +79,8 @@ const AdmissionWizard: React.FC = () => {
       newErrors.parentPhone = 'Parent Phone Number is required';
     } else if (!/^\d{10}$/.test(formData.parentPhone.trim())) {
       newErrors.parentPhone = 'Parent Phone number must be exactly 10 digits';
+    } else if (formData.phone?.trim() === formData.parentPhone.trim()) {
+      newErrors.parentPhone = 'Parent phone number must be different from student phone number';
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
