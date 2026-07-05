@@ -36,19 +36,30 @@ const AdmissionWizard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.hostelCode) {
-      const selectedHostel = hostels.find(h => h.hostelCode === formData.hostelCode);
-      if (selectedHostel && selectedHostel.id) {
-        getRooms(selectedHostel.id).then(res => {
-          setRooms(res.data || []);
-        }).catch(() => {
-          setRooms([]);
-        });
-      } else {
-        setRooms([]);
-      }
-    } else {
+    if (!formData.hostelCode) {
       setRooms([]);
+      return;
+    }
+    const selectedHostel = hostels.find(h => h.hostelCode === formData.hostelCode);
+    const hostelId = selectedHostel?.id;
+    if (hostelId) {
+      getRooms(hostelId).then(res => {
+        setRooms(res.data || []);
+      }).catch(() => setRooms([]));
+    } else {
+      // Hostel found by code but no numeric id yet — fetch all hostels fresh
+      import('@/services/publicAdmission').then(({ getHostels, getRooms: fetchRooms }) => {
+        getHostels().then(res => {
+          const freshHostels: any[] = res.data || [];
+          setHostels(freshHostels);
+          const fresh = freshHostels.find((h: any) => h.hostelCode === formData.hostelCode);
+          if (fresh?.id) {
+            fetchRooms(fresh.id).then(r => setRooms(r.data || [])).catch(() => setRooms([]));
+          } else {
+            setRooms([]);
+          }
+        }).catch(() => setRooms([]));
+      });
     }
   }, [formData.hostelCode, hostels]);
 
@@ -170,9 +181,10 @@ const AdmissionWizard: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student Name *</label>
                 <input
                   type="text"
+                  autoComplete="name"
                   value={formData.studentName ?? ''}
                   onChange={e => updateState({ studentName: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.studentName ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.studentName ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Enter full name"
                 />
                 {fieldErrors.studentName && <p className="text-red-500 text-xs mt-1">{fieldErrors.studentName}</p>}
@@ -180,10 +192,11 @@ const AdmissionWizard: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <input
-                  type="email"
+                  type="text"
+                  autoComplete="off"
                   value={formData.email ?? ''}
                   onChange={e => updateState({ email: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="student@example.com"
                 />
                 {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
@@ -192,9 +205,12 @@ const AdmissionWizard: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Aadhaar *</label>
                 <input
                   type="text"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  maxLength={12}
                   value={formData.aadhaarNumber ?? ''}
                   onChange={e => updateState({ aadhaarNumber: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.aadhaarNumber ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.aadhaarNumber ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Enter 12-digit Aadhaar number"
                 />
                 {fieldErrors.aadhaarNumber && <p className="text-red-500 text-xs mt-1">{fieldErrors.aadhaarNumber}</p>}
@@ -209,10 +225,13 @@ const AdmissionWizard: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                 <input
-                  type="tel"
+                  type="text"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  maxLength={10}
                   value={formData.phone ?? ''}
                   onChange={e => updateState({ phone: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.phone ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="9876543210"
                 />
                 {fieldErrors.phone && <p className="text-red-500 text-xs mt-1">{fieldErrors.phone}</p>}
@@ -220,10 +239,13 @@ const AdmissionWizard: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Parent Phone Number *</label>
                 <input
-                  type="tel"
+                  type="text"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  maxLength={10}
                   value={formData.parentPhone ?? ''}
                   onChange={e => updateState({ parentPhone: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.parentPhone ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.parentPhone ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="9876543210"
                 />
                 {fieldErrors.parentPhone && <p className="text-red-500 text-xs mt-1">{fieldErrors.parentPhone}</p>}
@@ -232,9 +254,10 @@ const AdmissionWizard: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name *</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={formData.fatherName ?? ''}
                   onChange={e => updateState({ fatherName: e.target.value })}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.fatherName ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2 pr-3 border rounded-md focus:ring-primary focus:border-primary outline-none ${fieldErrors.fatherName ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Enter father's name"
                 />
                 {fieldErrors.fatherName && <p className="text-red-500 text-xs mt-1">{fieldErrors.fatherName}</p>}

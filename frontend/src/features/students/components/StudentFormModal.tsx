@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { Student, Hostel, Room, Bed } from '@/types';
 
 const studentSchema = z.object({
-  studentId: z.string().min(1, 'Student ID is required'),
+  studentId: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
   phone: z.string().min(1, 'Phone is required'),
   parentPhone: z.string().optional().or(z.literal('')),
@@ -153,21 +153,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control as any}
-                name="studentId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Student ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="STU-001" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control as any}
                 name="name"
