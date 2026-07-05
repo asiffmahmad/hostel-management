@@ -74,7 +74,7 @@ export default function ViewComplaints() {
           <MessageSquareWarning className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">View Complaints</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">View Complaints</h1>
           <p className="text-muted-foreground text-sm">Track and manage maintenance complaints.</p>
         </div>
       </div>

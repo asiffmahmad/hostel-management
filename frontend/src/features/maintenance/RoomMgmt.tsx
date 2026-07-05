@@ -82,7 +82,7 @@ export default function RoomMgmt() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Room Management</h1>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Room Management</h1>
         <Button>Add New Room</Button>
       </div>
 
@@ -94,6 +94,7 @@ export default function RoomMgmt() {
           {rooms.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">No rooms found.</div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -129,6 +130,7 @@ export default function RoomMgmt() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

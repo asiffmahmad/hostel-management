@@ -307,7 +307,7 @@ export default function PaymentCheck() {
           <ClipboardCheck className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payment Check</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Payment Check</h1>
           <p className="text-muted-foreground text-sm">Upload bank statement and view all imported transactions</p>
         </div>
       </div>

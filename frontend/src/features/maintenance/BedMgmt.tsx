@@ -95,7 +95,7 @@ export default function BedMgmt() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Bed Management</h1>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Bed Management</h1>
         <Button onClick={openAddModal}>Add New Bed</Button>
       </div>
 
@@ -107,6 +107,7 @@ export default function BedMgmt() {
           {beds.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">No beds found.</div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -149,6 +150,7 @@ export default function BedMgmt() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -70,8 +70,8 @@ const AdminAdmissions: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Pending Admissions</h1>
+    <div className="p-3 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">Pending Admissions</h1>
       <div className="overflow-x-auto w-full">
         <table className="min-w-full bg-white bg-opacity-80 backdrop-blur-sm shadow rounded-lg overflow-hidden">
           <thead className="bg-primary text-white">
@@ -116,11 +116,11 @@ const AdminAdmissions: React.FC = () => {
       </div>
 
       {editingAdmission && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto pt-20 pb-20">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:pt-20 sm:pb-20">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-4 sm:p-6 my-auto">
             <h2 className="text-xl font-bold mb-4">Edit Admission Request</h2>
             <form onSubmit={handleUpdate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Student Name</label>
                   <input type="text" required value={editFormData.studentName || ''} onChange={e => setEditFormData({...editFormData, studentName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />

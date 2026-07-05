@@ -109,7 +109,7 @@ export default function MenuSettings() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Menu Configuration</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Menu Configuration</h1>
           <p className="text-muted-foreground mt-1">
             Enable or disable major application modules. Disabled modules will be hidden from Admins and standard Users.
           </p>
@@ -124,15 +124,15 @@ export default function MenuSettings() {
           
           return (
             <Card key={menu.key} className={`glass-panel transition-all ${!isEnabled ? 'opacity-70 grayscale-[0.2]' : ''}`}>
-              <CardContent className="flex items-center justify-between p-6">
+              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 gap-3">
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg">{menu.label}</h3>
+                  <h3 className="font-semibold text-base sm:text-lg">{menu.label}</h3>
                   <p className="text-sm text-muted-foreground">{menu.description}</p>
                 </div>
                 
                 <Button 
                   variant={isEnabled ? "default" : "secondary"}
-                  className={`w-32 transition-colors ${isEnabled ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                  className={`w-full sm:w-32 transition-colors ${isEnabled ? 'bg-green-600 hover:bg-green-700' : ''}`}
                   onClick={() => handleToggle(menu.key, value, menu.description)}
                   disabled={isProcessing}
                 >

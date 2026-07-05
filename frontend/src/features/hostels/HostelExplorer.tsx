@@ -146,7 +146,7 @@ export default function HostelExplorer() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Hostel Explorer</h1>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Hostel Explorer</h1>
         <p className="text-muted-foreground text-sm bg-muted/30 px-3 py-1 rounded-full w-fit">View hostels, rooms, beds and occupants</p>
       </div>
 
@@ -154,12 +154,12 @@ export default function HostelExplorer() {
         {hostels.map((hostel, hIdx) => (
           <Card key={hostel.id} className="overflow-hidden border-border/50 shadow-sm hover:shadow transition-all duration-300">
             <div 
-              className="p-5 bg-gradient-to-r from-card to-muted/20 hover:from-muted/20 hover:to-muted/30 cursor-pointer flex items-center justify-between transition-all"
+              className="p-3 sm:p-5 bg-gradient-to-r from-card to-muted/20 hover:from-muted/20 hover:to-muted/30 cursor-pointer flex items-center justify-between transition-all"
               onClick={() => toggleHostel(hIdx)}
             >
               <div className="flex items-center gap-3">
                 <Building2 className="text-primary w-6 h-6" />
-                <h2 className="text-xl font-semibold">{hostel.name}</h2>
+                <h2 className="text-base sm:text-xl font-semibold">{hostel.name}</h2>
               </div>
               {hostel.isExpanded ? <ChevronDown /> : <ChevronRight />}
             </div>
@@ -179,7 +179,7 @@ export default function HostelExplorer() {
                           onClick={() => toggleRoom(hIdx, rIdx)}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-lg">Room {room.roomNumber}</span>
+                            <span className="font-medium text-sm sm:text-lg">Room {room.roomNumber}</span>
                             <Badge variant="outline">Capacity: {room.capacity}</Badge>
                           </div>
                           {room.isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}

@@ -37,7 +37,7 @@ const Hostels = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Hostels</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Hostels</h1>
           <p className="text-muted-foreground mt-1">Manage all your hostel properties and configurations.</p>
         </div>
         <Button className="shrink-0 gap-2" onClick={() => { setSelectedHostel(undefined); setIsModalOpen(true); }}>

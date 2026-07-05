@@ -85,12 +85,12 @@ const Payments = () => {
   const pendingCount = monthFilteredPayments?.filter((p: any) => p.status === 'PENDING' || p.status === 'PENDING DUE').length || 0;
 
   return (
-    <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payments & Receipts</h1>
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight">Payments & Receipts</h1>
           <p className="text-sm text-muted-foreground mt-1">Track fee collections and financial history.</p>
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 mt-2 sm:mt-3">
             <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1 text-sm font-medium">
               {paidCount} Paid
             </Badge>

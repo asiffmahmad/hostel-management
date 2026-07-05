@@ -115,7 +115,7 @@ export default function GiveComplaints() {
           <MessageSquareWarning className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Give Complaint</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Give Complaint</h1>
           <p className="text-muted-foreground text-sm">Register a new maintenance complaint.</p>
         </div>
       </div>

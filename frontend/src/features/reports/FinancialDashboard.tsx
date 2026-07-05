@@ -92,7 +92,7 @@ export default function FinancialDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financial Dashboard</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Financial Dashboard</h1>
           <p className="text-muted-foreground text-sm">Comprehensive view of revenue, expenses, and profitability.</p>
         </div>
         <div className="flex items-center gap-2 bg-card p-1 rounded-lg border shadow-sm">
@@ -127,7 +127,7 @@ export default function FinancialDashboard() {
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">₹{report?.totalRevenue?.toFixed(2) || 0}</div>
+            <div className="text-xl sm:text-3xl font-bold text-green-600">₹{report?.totalRevenue?.toFixed(2) || 0}</div>
           </CardContent>
         </Card>
 
@@ -137,7 +137,7 @@ export default function FinancialDashboard() {
             <DollarSign className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">₹{report?.totalExpenses?.toFixed(2) || 0}</div>
+            <div className="text-xl sm:text-3xl font-bold text-red-600">₹{report?.totalExpenses?.toFixed(2) || 0}</div>
           </CardContent>
         </Card>
 
@@ -151,7 +151,7 @@ export default function FinancialDashboard() {
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${getProfitColor(report?.netProfit || 0)}`}>
+            <div className={`text-xl sm:text-3xl font-bold ${getProfitColor(report?.netProfit || 0)}`}>
               ₹{report?.netProfit?.toFixed(2) || 0}
             </div>
           </CardContent>
@@ -164,7 +164,7 @@ export default function FinancialDashboard() {
           <CardDescription>Monthly comparison of revenue, expenses, and profit.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="h-[450px] w-full">
+          <div className="h-[280px] sm:h-[450px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={report?.monthlyData || []}

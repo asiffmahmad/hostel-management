@@ -141,19 +141,19 @@ const AdmissionWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-10 px-2 sm:px-4">
       <div className="w-full max-w-3xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="bg-primary px-8 py-6 text-white text-center">
-          <h1 className="text-2xl font-bold">sri sai ram ladies Hostel</h1>
+        <div className="bg-primary px-4 sm:px-8 py-4 sm:py-6 text-white text-center">
+          <h1 className="text-xl sm:text-2xl font-bold">sri sai ram ladies Hostel</h1>
           <p className="text-primary-foreground/80 text-sm mt-1">Complete the form below to submit your application.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6 sm:space-y-8">
 
           {/* Section 1: Personal Info */}
           <div>
             <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Personal Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-black">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student Name *</label>
                 <input
@@ -193,7 +193,7 @@ const AdmissionWizard: React.FC = () => {
           {/* Section 2: Contact Details */}
           <div>
             <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Contact Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-black">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                 <input

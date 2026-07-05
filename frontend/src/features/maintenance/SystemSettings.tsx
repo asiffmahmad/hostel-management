@@ -104,7 +104,7 @@ export default function SystemSettings() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">System Settings</h1>
       </div>
 
       <Card>
@@ -113,7 +113,7 @@ export default function SystemSettings() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Key</label>
                 <Input 
@@ -168,7 +168,7 @@ export default function SystemSettings() {
           {settings.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">No settings found.</div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

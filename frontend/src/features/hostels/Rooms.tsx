@@ -32,7 +32,7 @@ const Rooms = () => {
           <ArrowLeft size={20} />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Rooms</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Rooms</h1>
           <p className="text-muted-foreground mt-1">Manage rooms and bed availability for this hostel.</p>
         </div>
       </div>

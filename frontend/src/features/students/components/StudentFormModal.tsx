@@ -154,7 +154,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control as any}
                 name="studentId"
@@ -196,7 +196,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control as any}
                 name="phone"
@@ -238,7 +238,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control as any}
                 name="monthlyRent"
@@ -267,7 +267,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control as any}
                 name="status"
@@ -293,7 +293,7 @@ export const StudentFormModal = ({ isOpen, onClose, initialData }: StudentFormMo
 
             <div className="border-t pt-4 mt-4">
               <h3 className="text-sm font-medium mb-3">Assign Accommodation (Optional)</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Hostel</label>
                   <select

@@ -102,10 +102,10 @@ const ExpensesDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 bg-card rounded-2xl p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-8rem)] overflow-auto">
+    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)] overflow-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Expenses Dashboard</h1>
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight">Expenses Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Track and categorize hostel operational costs.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
@@ -120,7 +120,7 @@ const ExpensesDashboard = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 shrink-0">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 shrink-0">
         <Card className="glass-panel lg:col-span-1 border-primary/20 bg-primary/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground flex justify-between">
@@ -128,7 +128,7 @@ const ExpensesDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalExpensesAmount.toFixed(2)}</div>
+            <div className="text-lg sm:text-2xl font-bold">₹{totalExpensesAmount.toFixed(2)}</div>
           </CardContent>
         </Card>
         
@@ -140,7 +140,7 @@ const ExpensesDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">₹{categoryTotals[cat].toFixed(2)}</div>
+              <div className="text-base sm:text-xl font-bold">₹{categoryTotals[cat].toFixed(2)}</div>
             </CardContent>
           </Card>
         ))}

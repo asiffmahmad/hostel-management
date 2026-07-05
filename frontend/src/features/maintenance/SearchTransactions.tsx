@@ -161,7 +161,7 @@ export default function SearchTransactions() {
           <Search className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Search Transactions</h1>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Search Transactions</h1>
           <p className="text-muted-foreground text-sm">Search bank transactions and map them to students</p>
         </div>
       </div>

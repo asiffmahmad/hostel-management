@@ -68,7 +68,7 @@ const Login = () => {
             <Building2 size={32} />
           </div>
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Welcome back</h1>
             <p className="text-sm text-muted-foreground">
               Sign in to manage your hostels
             </p>
