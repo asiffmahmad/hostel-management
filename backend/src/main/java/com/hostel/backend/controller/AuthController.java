@@ -53,6 +53,28 @@ public class AuthController {
                 roles));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null || authentication.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(401).body(new MessageResponse("Unauthorized"));
+        }
+        
+        if (!(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return ResponseEntity.status(401).body(new MessageResponse("Unauthorized: Invalid Principal"));
+        }
+        
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(java.util.Map.of(
+                "id", userDetails.getId(),
+                "username", userDetails.getUsername(),
+                "roles", roles
+        ));
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {

@@ -429,7 +429,7 @@ export default function PaymentCheck() {
           setSelectedHostelId('');
           setSelectedStudentId('');
         }} />
-      </TabsContent>
+        </TabsContent>
       </Tabs>
     </div>
   );

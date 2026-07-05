@@ -102,7 +102,7 @@ const ExpensesDashboard = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)] overflow-auto">
+    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-8rem)] overflow-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold tracking-tight">Expenses Dashboard</h1>

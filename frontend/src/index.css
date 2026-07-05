@@ -53,6 +53,10 @@
   * {
     @apply border-border;
   }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
   body {
     @apply bg-background text-foreground;
     font: 16px/1.5 'Inter', system-ui, -apple-system, sans-serif;

@@ -64,6 +64,8 @@ export interface Payment {
   dueAmount?: number;
   dueDate: string;
   utrNumber?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DashboardStats {

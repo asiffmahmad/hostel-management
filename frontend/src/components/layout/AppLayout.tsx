@@ -115,7 +115,7 @@ const AppLayout = () => {
   const filteredMaintenanceItems = maintenanceItems.filter(isMenuVisible);
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden relative">
+    <div className="flex h-[100dvh] bg-background overflow-hidden relative">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -149,7 +149,7 @@ const AppLayout = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
+                  `flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-md transition-colors text-sm sm:text-base ${
                     isActive
                       ? 'bg-primary text-primary-foreground font-medium shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -157,7 +157,7 @@ const AppLayout = () => {
                 }
                 onClick={() => { if (isMobile) setSidebarOpen(false); }}
               >
-                <Icon size={20} className="shrink-0" />
+                <Icon size={18} className="shrink-0 sm:w-5 sm:h-5" />
                 {sidebarOpen && <span>{item.name}</span>}
               </NavLink>
             );
@@ -168,17 +168,17 @@ const AppLayout = () => {
               {sidebarOpen ? (
                 <button
                   onClick={() => setMaintenanceOpen(!maintenanceOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full flex items-center justify-between px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <Wrench size={20} />
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <Wrench size={18} className="sm:w-5 sm:h-5" />
                     <span>Maintenance</span>
                   </div>
-                  {maintenanceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  {maintenanceOpen ? <ChevronDown size={14} className="sm:w-4 sm:h-4" /> : <ChevronRight size={14} className="sm:w-4 sm:h-4" />}
                 </button>
               ) : (
                 <div className="flex justify-center py-2 text-muted-foreground">
-                  <Wrench size={20} />
+                  <Wrench size={18} className="sm:w-5 sm:h-5" />
                 </div>
               )}
               
@@ -188,7 +188,7 @@ const AppLayout = () => {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden space-y-1 mt-1 pl-4"
+                    className="overflow-hidden space-y-0.5 sm:space-y-1 mt-1 pl-3 sm:pl-4"
                   >
                     {filteredMaintenanceItems.map((item) => {
                       const Icon = item.icon;
@@ -197,7 +197,7 @@ const AppLayout = () => {
                           key={item.path}
                           to={item.path}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                            `flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md transition-colors ${
                               isActive
                                 ? 'bg-secondary text-secondary-foreground font-medium'
                                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -205,7 +205,7 @@ const AppLayout = () => {
                           }
                           onClick={() => { if (isMobile) setSidebarOpen(false); }}
                         >
-                          <Icon size={16} className="shrink-0" />
+                          <Icon size={14} className="shrink-0 sm:w-4 sm:h-4" />
                           <span>{item.name}</span>
                         </NavLink>
                       );

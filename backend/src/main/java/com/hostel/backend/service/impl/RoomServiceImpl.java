@@ -33,6 +33,19 @@ public class RoomServiceImpl implements RoomService {
         room.setHostel(hostel);
         
         Room savedRoom = roomRepository.save(room);
+
+        // Auto-generate beds based on capacity
+        if (roomDTO.getCapacity() != null && roomDTO.getCapacity() > 0) {
+            for (int i = 1; i <= roomDTO.getCapacity(); i++) {
+                com.hostel.backend.entity.Bed bed = new com.hostel.backend.entity.Bed();
+                bed.setRoom(savedRoom);
+                bed.setBedNumber("B" + i);
+                bed.setBedName("Bed " + i);
+                bed.setStatus(com.hostel.backend.enums.BedStatus.VACANT);
+                bedRepository.save(bed);
+            }
+        }
+
         return mapToDtoWithOccupancy(savedRoom);
     }
 
@@ -41,14 +54,14 @@ public class RoomServiceImpl implements RoomService {
         if (hostelId != null) {
             return getRoomsByHostelId(hostelId);
         }
-        return roomRepository.findAll().stream()
+        return roomRepository.findByIsDeletedFalse().stream()
                 .map(this::mapToDtoWithOccupancy)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<RoomDTO> getRoomsByHostelId(Long hostelId) {
-        List<Room> rooms = roomRepository.findByHostelId(hostelId);
+        List<Room> rooms = roomRepository.findByHostelIdAndIsDeletedFalse(hostelId);
         return rooms.stream().map(this::mapToDtoWithOccupancy).collect(Collectors.toList());
     }
 
@@ -81,11 +94,20 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
         
-        long occupiedBeds = bedRepository.findByRoomIdAndIsDeletedFalse(id).stream()
+        List<com.hostel.backend.entity.Bed> beds = bedRepository.findByRoomIdAndIsDeletedFalse(id);
+        
+        long occupiedBeds = beds.stream()
                 .filter(b -> b.getStatus() == BedStatus.OCCUPIED)
                 .count();
         if (occupiedBeds > 0) {
             throw new IllegalStateException("Cannot delete room with occupied beds.");
+        }
+        
+        // Soft delete all beds
+        for (com.hostel.backend.entity.Bed bed : beds) {
+            bed.setIsDeleted(true);
+            bed.setIsActive(false);
+            bedRepository.save(bed);
         }
         
         room.setIsDeleted(true);

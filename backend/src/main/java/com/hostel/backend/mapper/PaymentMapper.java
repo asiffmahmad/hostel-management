@@ -33,6 +33,8 @@ public class PaymentMapper {
         dto.setPaymentSource(entity.getPaymentSource());
         dto.setBankName(entity.getBankName());
         dto.setImportedDate(entity.getImportedDate());
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setUpdatedAt(entity.getUpdatedAt());
 
         return dto;
     }

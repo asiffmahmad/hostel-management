@@ -79,7 +79,7 @@ export default function ViewComplaints() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border shadow-sm flex flex-col h-[calc(100vh-12rem)] glass-panel overflow-hidden">
+      <div className="bg-card rounded-xl border shadow-sm flex flex-col h-[calc(100dvh-12rem)] glass-panel overflow-hidden">
         <div className="flex-1 overflow-auto bg-background/50">
           <div className="hidden md:block">
             <Table>

@@ -20,7 +20,13 @@ import { useHostel } from '@/app/HostelContext';
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
+  
+  // Default to current month (YYYY-MM)
+  const currentYear = new Date().getFullYear();
+  const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+  const [selectedMonth, setSelectedMonth] = useState(`${currentYear}-${currentMonthStr}`);
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | undefined>(undefined);
   const queryClient = useQueryClient();
@@ -70,7 +76,22 @@ const Payments = () => {
       matchesMonth = p.month.toUpperCase() === monthName && p.year === yearStr;
     }
     
-    return matchesSearch && matchesMonth;
+    let matchesStatus = true;
+    if (selectedStatus !== 'ALL') {
+      matchesStatus = p.status === selectedStatus;
+    }
+    
+    return matchesSearch && matchesMonth && matchesStatus;
+  });
+
+  const { data: students } = useQuery<any[]>({
+    queryKey: ['students', selectedHostelId],
+    queryFn: async () => {
+      const res = await api.get('/students', {
+        params: { hostelId: selectedHostelId || undefined }
+      });
+      return res.data;
+    },
   });
 
   const monthFilteredPayments = payments?.filter((p: any) => {
@@ -82,10 +103,11 @@ const Payments = () => {
   });
 
   const paidCount = monthFilteredPayments?.filter((p: any) => p.status === 'PAID').length || 0;
-  const pendingCount = monthFilteredPayments?.filter((p: any) => p.status === 'PENDING' || p.status === 'PENDING DUE').length || 0;
+  const totalStudentsCount = students?.length || 0;
+  const pendingCount = Math.max(0, totalStudentsCount - paidCount);
 
   return (
-    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)]">
+    <div className="space-y-4 sm:space-y-6 bg-card rounded-2xl p-3 sm:p-6 glass-panel border shadow-sm flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-8rem)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold tracking-tight">Payments & Receipts</h1>
@@ -131,6 +153,17 @@ const Payments = () => {
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
         />
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="flex h-10 w-full sm:w-[150px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="ALL">All Status</option>
+          <option value="PAID">Paid</option>
+          <option value="PENDING">Pending</option>
+          <option value="PENDING DUE">Pending Due</option>
+          <option value="FAILED">Failed</option>
+        </select>
         <Button variant="secondary" size="icon">
           <Filter className="h-4 w-4" />
         </Button>
@@ -143,6 +176,7 @@ const Payments = () => {
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow>
                 <TableHead>Transaction ID</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>UTR Number</TableHead>
                 <TableHead className="hidden md:table-cell">Period</TableHead>
@@ -170,6 +204,13 @@ const Payments = () => {
                 filteredPayments?.map((payment: any) => (
                   <TableRow key={payment.id} className="hover:bg-muted/30">
                     <TableCell className="font-medium text-primary">PAY-{payment.id}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {payment.status === 'PAID' && payment.updatedAt
+                        ? new Date(payment.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : payment.createdAt 
+                          ? new Date(payment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) 
+                          : '—'}
+                    </TableCell>
                     <TableCell>{(payment as any).studentName || `STD-${payment.studentId}`}</TableCell>
                     <TableCell>
                       {(payment as any).utrNumber
@@ -196,11 +237,9 @@ const Payments = () => {
                         className={
                           payment.status === 'PAID' 
                             ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                            : payment.status === 'PENDING_VERIFICATION'
-                              ? 'bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-none'
-                              : payment.status?.startsWith('PENDING')
-                                ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
-                                : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                            : payment.status?.startsWith('PENDING')
+                              ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                              : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                         }
                       >
                         {payment.status}
@@ -248,11 +287,9 @@ const Payments = () => {
                     className={
                       payment.status === 'PAID' 
                         ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                        : payment.status === 'PENDING_VERIFICATION'
-                          ? 'bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-none'
-                          : payment.status?.startsWith('PENDING')
-                            ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
-                            : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                        : payment.status?.startsWith('PENDING')
+                          ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                          : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                     }
                   >
                     {payment.status}
@@ -260,6 +297,16 @@ const Payments = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Date</span>
+                    <span className="font-medium">
+                      {payment.status === 'PAID' && payment.updatedAt
+                        ? new Date(payment.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : payment.createdAt 
+                          ? new Date(payment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) 
+                          : '—'}
+                    </span>
+                  </div>
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Amount Paid</span>
                     <span className="font-semibold">₹{(payment.amount || 0).toFixed(2)}</span>

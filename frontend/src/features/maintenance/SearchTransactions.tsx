@@ -9,6 +9,8 @@ import {
   Search, CheckCircle2, AlertCircle, Loader2,
   Building, BedDouble, Users, IndianRupee, X
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ManualMappingSection } from './components/ManualMappingSection';
 
 interface BankTxn {
   id: number; utrNumber: string; amount: number; transactionDate: string;
@@ -38,8 +40,10 @@ export default function SearchTransactions() {
 
   // Cascading dropdowns
   const [hostels, setHostels] = useState<Hostel[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState('');
+  const [selectedRoomId, setSelectedRoomId] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [loadingDropdown, setLoadingDropdown] = useState(false);
 
@@ -51,9 +55,17 @@ export default function SearchTransactions() {
   useEffect(() => { fetchHostels(); }, []);
 
   useEffect(() => {
-    if (selectedHostelId) fetchStudentsInHostel(selectedHostelId);
-    else setStudents([]);
+    if (selectedHostelId) fetchRoomsInHostel(selectedHostelId);
+    else {
+      setRooms([]);
+      setStudents([]);
+    }
   }, [selectedHostelId]);
+
+  useEffect(() => {
+    if (selectedRoomId) fetchStudentsInRoom(selectedRoomId);
+    else setStudents([]);
+  }, [selectedRoomId]);
 
   useEffect(() => {
     if (selectedStudentId) {
@@ -73,10 +85,24 @@ export default function SearchTransactions() {
     } catch (e) { console.error(e); }
   };
 
-  const fetchStudentsInHostel = async (hostelId: string) => {
+  const fetchRoomsInHostel = async (hostelId: string) => {
     try {
       setLoadingDropdown(true);
-      const { data } = await api.get(`/students?hostelId=${hostelId}`);
+      const { data } = await api.get(`/rooms?hostelId=${hostelId}`);
+      setRooms(data);
+      setSelectedRoomId('');
+      setSelectedStudentId('');
+    } catch (e) {
+      console.error(e);
+    } finally { 
+      setLoadingDropdown(false); 
+    }
+  };
+
+  const fetchStudentsInRoom = async (roomId: string) => {
+    try {
+      setLoadingDropdown(true);
+      const { data } = await api.get(`/students?roomId=${roomId}`);
       const studentList = data.filter((s: any) => !s.isDeleted && s.status === 'ACTIVE');
       setStudents(studentList);
       setSelectedStudentId('');
@@ -140,6 +166,7 @@ export default function SearchTransactions() {
       toast({ title: `✅ Payment confirmed for ${selectedStudent?.name}` });
       setSelectedTxn(null);
       setSelectedHostelId('');
+      setSelectedRoomId('');
       setSelectedStudentId('');
       handleSearch();
     } catch (err: any) {
@@ -166,10 +193,17 @@ export default function SearchTransactions() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Search className="h-5 w-5 text-primary" />
+      <Tabs defaultValue="search" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="search">Search & Map</TabsTrigger>
+          <TabsTrigger value="manual">Manual UTR Mapping</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="search" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Search className="h-5 w-5 text-primary" />
             Find Transactions
           </CardTitle>
           <CardDescription>Search imported transactions by UTR number or amount.</CardDescription>
@@ -282,7 +316,7 @@ export default function SearchTransactions() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
                   <Building className="h-3.5 w-3.5" /> Select Hostel
@@ -299,13 +333,28 @@ export default function SearchTransactions() {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
+                  <BedDouble className="h-3.5 w-3.5" /> Select Room
+                </label>
+                <select
+                  className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                  value={selectedRoomId}
+                  onChange={e => setSelectedRoomId(e.target.value)}
+                  disabled={!selectedHostelId || loadingDropdown}
+                >
+                  <option value="">— Select Room —</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.roomNumber}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" /> Select Student
                 </label>
                 <select
                   className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                   value={selectedStudentId}
                   onChange={e => setSelectedStudentId(e.target.value)}
-                  disabled={!selectedHostelId || loadingDropdown}
+                  disabled={!selectedRoomId || loadingDropdown}
                 >
                   <option value="">— Select Student —</option>
                   {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -379,6 +428,12 @@ export default function SearchTransactions() {
           </CardContent>
         </Card>
       )}
+      </TabsContent>
+
+      <TabsContent value="manual">
+        <ManualMappingSection />
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

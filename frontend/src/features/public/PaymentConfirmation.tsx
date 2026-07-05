@@ -11,6 +11,7 @@ export default function PaymentConfirmation() {
   const { toast } = useToast();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [phone, setPhone] = useState('');
+  const [studentIdInput, setStudentIdInput] = useState('');
   const [loading, setLoading] = useState(false);
   
   // Student details from step 1
@@ -41,10 +42,14 @@ export default function PaymentConfirmation() {
       setErrorMsg('Please enter a valid 10-digit phone number.');
       return;
     }
+    if (!studentIdInput.trim()) {
+      setErrorMsg('Please enter your Student ID.');
+      return;
+    }
 
     try {
       setLoading(true);
-      const { data } = await api.get(`/public/students/lookup?phone=${phone}`);
+      const { data } = await api.get(`/public/students/lookup?phone=${phone}&studentId=${encodeURIComponent(studentIdInput.trim())}`);
       setStudent(data);
       setAmount(data.monthlyRent?.toString() || '');
       setStep(2);
@@ -90,18 +95,20 @@ export default function PaymentConfirmation() {
   const resetForm = () => {
     setStep(1);
     setPhone('');
+    setStudentIdInput('');
     setStudent(null);
     setUtrNumber('');
     setAmount('');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px]" />
-        <div className="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px]" />
-      </div>
+    <div className="h-[100dvh] overflow-y-auto bg-slate-50 relative">
+      <div className="min-h-full flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px]" />
+          <div className="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px]" />
+        </div>
 
       <div className="w-full max-w-lg z-10">
         <div className="text-center mb-8">
@@ -130,6 +137,18 @@ export default function PaymentConfirmation() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       maxLength={10}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Student ID</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="e.g. STU12345678"
+                      className={`pl-10 h-12 text-lg bg-white/50 focus:bg-white ${errorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      value={studentIdInput}
+                      onChange={(e) => setStudentIdInput(e.target.value.toUpperCase())}
                     />
                   </div>
                   {errorMsg && <p className="text-sm text-red-500 mt-1 font-medium">{errorMsg}</p>}
@@ -299,6 +318,7 @@ export default function PaymentConfirmation() {
             </CardFooter>
           </Card>
         )}
+      </div>
       </div>
     </div>
   );

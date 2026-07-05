@@ -38,7 +38,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         Hostel hostel = hostelRepository.findByHostelCodeAndIsDeletedFalse(dto.getHostelCode())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid hostel selection"));
         // Validate room
-        Room room = roomRepository.findByHostelIdAndRoomNumber(hostel.getId(), dto.getRoomNumber())
+        Room room = roomRepository.findByHostelIdAndRoomNumberAndIsDeletedFalse(hostel.getId(), dto.getRoomNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid room selection"));
         // Bed validation is deferred to admin approval. Store bedName as provided (may be empty).
         // No lookup of Bed entity here.
@@ -79,7 +79,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid hostel selection"));
         
         // Validate room
-        Room room = roomRepository.findByHostelIdAndRoomNumber(hostel.getId(), dto.getRoomNumber())
+        Room room = roomRepository.findByHostelIdAndRoomNumberAndIsDeletedFalse(hostel.getId(), dto.getRoomNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid room selection"));
 
         request.setStudentName(dto.getStudentName());
@@ -133,7 +133,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         // Re-validate hostel/room/bed (in case state changed)
         Hostel hostel = hostelRepository.findByHostelCodeAndIsDeletedFalse(request.getHostelCode())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid hostel selection"));
-        Room room = roomRepository.findByHostelIdAndRoomNumber(hostel.getId(), request.getRoomNumber())
+        Room room = roomRepository.findByHostelIdAndRoomNumberAndIsDeletedFalse(hostel.getId(), request.getRoomNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid room selection"));
         List<Bed> beds = bedRepository.findByRoomIdAndIsDeletedFalse(room.getId());
         Bed bed = beds.stream()

@@ -3,11 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { getPending, approve, reject, updateAdmission } from '@/services/adminAdmission';
 import { toast } from 'react-hot-toast';
 import type { AdmissionRequestResponseDTO } from '@/types';
+import { Check, X, Edit2, Phone, Mail, Building, BedDouble, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
-/**
- * Admin UI for managing pending admission requests.
- * Shows a simple table with approve/reject actions.
- */
 const AdminAdmissions: React.FC = () => {
   const [pending, setPending] = useState<AdmissionRequestResponseDTO[]>([]);
   const [editingAdmission, setEditingAdmission] = useState<AdmissionRequestResponseDTO | null>(null);
@@ -30,8 +46,7 @@ const AdminAdmissions: React.FC = () => {
   const handleApprove = async (p: AdmissionRequestResponseDTO) => {
     try {
       await approve(p.id!);
-      toast.success('Approved');
-      window.alert(`Admission for ${p.studentName} successfully approved!`);
+      toast.success(`Admission for ${p.studentName} successfully approved!`);
       fetchPending();
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Approve failed. Invalid bed or room.');
@@ -43,8 +58,7 @@ const AdminAdmissions: React.FC = () => {
     if (!reason) return;
     try {
       await reject(id, reason);
-      toast.success('Rejected');
-      window.alert('Admission successfully rejected!');
+      toast.success('Admission successfully rejected!');
       fetchPending();
     } catch (e) {
       toast.error('Reject failed');
@@ -70,106 +84,232 @@ const AdminAdmissions: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4">Pending Admissions</h1>
-      <div className="overflow-x-auto w-full">
-        <table className="min-w-full bg-white bg-opacity-80 backdrop-blur-sm shadow rounded-lg overflow-hidden">
-          <thead className="bg-primary text-white">
-            <tr>
-              <th className="px-4 py-2">ID</th>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Phone</th>
-              <th className="px-4 py-2">Aadhaar</th>
-              <th className="px-4 py-2">Hostel</th>
-              <th className="px-4 py-2">Room</th>
-              <th className="px-4 py-2">Bed</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.isArray(pending) && pending.map(p => (
-              <tr key={p.id} className="border-b">
-                <td className="px-4 py-2">{p.id}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.studentName}</td>
-                <td className="px-4 py-2">{p.email}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.phone}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.aadhaarNumber}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.hostelCode}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.roomNumber}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{p.bedName}</td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <button className="btn-primary mr-2" onClick={() => handleApprove(p)}>
-                    Approve
-                  </button>
-                  <button className="btn-secondary mr-2" onClick={() => handleEdit(p)} style={{ backgroundColor: '#6b7280', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>
-                    Edit
-                  </button>
-                  <button className="btn-danger" onClick={() => handleReject(p.id!)}>
-                    Reject
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-card rounded-2xl glass-panel border shadow-sm flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-8rem)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div>
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight">Pending Admissions</h1>
+          <p className="text-sm text-muted-foreground mt-1">Review and manage new student applications.</p>
+        </div>
+        <div className="flex items-center gap-2 mt-4 sm:mt-0">
+          <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-3 py-1 text-sm font-medium">
+            {pending.length} Pending
+          </Badge>
+        </div>
       </div>
 
-      {editingAdmission && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:pt-20 sm:pb-20">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-4 sm:p-6 my-auto">
-            <h2 className="text-xl font-bold mb-4">Edit Admission Request</h2>
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Student Name</label>
-                  <input type="text" required value={editFormData.studentName || ''} onChange={e => setEditFormData({...editFormData, studentName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input type="email" required value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
-                  <input type="text" required pattern="^\d{10}$" title="Phone must be exactly 10 digits" value={editFormData.phone || ''} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Parent Phone</label>
-                  <input type="text" required pattern="^\d{10}$" title="Parent phone must be exactly 10 digits" value={editFormData.parentPhone || ''} onChange={e => setEditFormData({...editFormData, parentPhone: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Father's Name</label>
-                  <input type="text" required value={editFormData.fatherName || ''} onChange={e => setEditFormData({...editFormData, fatherName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Aadhaar</label>
-                  <input type="text" required pattern="^\d{12}$" title="Aadhaar must be exactly 12 digits" value={editFormData.aadhaarNumber || ''} onChange={e => setEditFormData({...editFormData, aadhaarNumber: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
-                  <textarea required value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" rows={2}></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hostel Code</label>
-                  <input type="text" required value={editFormData.hostelCode || ''} onChange={e => setEditFormData({...editFormData, hostelCode: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Room Number</label>
-                  <input type="text" required value={editFormData.roomNumber || ''} onChange={e => setEditFormData({...editFormData, roomNumber: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bed Name</label>
-                  <input type="text" value={editFormData.bedName || ''} onChange={e => setEditFormData({...editFormData, bedName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border" placeholder="Pending Assignment" />
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end space-x-3">
-                <button type="button" onClick={() => setEditingAdmission(null)} className="btn-secondary" style={{ backgroundColor: '#e5e7eb', color: 'black', padding: '0.5rem 1rem', borderRadius: '0.25rem' }}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{ backgroundColor: '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem' }}>Save Changes</button>
-              </div>
-            </form>
-          </div>
+      <div className="flex-1 overflow-auto bg-background/50 rounded-md border">
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+              <TableRow>
+                <TableHead>Applicant Details</TableHead>
+                <TableHead>Contact Info</TableHead>
+                <TableHead>Aadhaar</TableHead>
+                <TableHead>Hostel & Room</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pending.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No pending admissions found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pending.map(p => (
+                  <TableRow key={p.id} className="group hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9 border">
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {p.studentName?.substring(0, 2).toUpperCase() || <User size={16} />}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-slate-100">{p.studentName}</div>
+                          <div className="text-xs text-muted-foreground">ID: #{p.id}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Phone size={14} className="text-muted-foreground" />
+                          <span>{p.phone}</span>
+                        </div>
+                        {p.email && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail size={14} />
+                            <span className="truncate max-w-[150px]">{p.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">
+                        {p.aadhaarNumber?.replace(/(\d{4})/g, '$1 ').trim()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Building size={14} className="text-muted-foreground" />
+                          <span className="font-medium">{p.hostelCode}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <BedDouble size={14} />
+                          <span>Room {p.roomNumber}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2 opacity-100 sm:opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleApprove(p)}
+                          className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 hover:text-green-700"
+                        >
+                          <Check size={16} className="mr-1" /> Approve
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(p)}
+                          className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                          <Edit2 size={16} className="mr-1" /> Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleReject(p.id!)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X size={16} className="mr-1" /> Reject
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      )}
+
+        {/* Mobile List View */}
+        <div className="md:hidden space-y-4 p-4">
+          {pending.length === 0 ? (
+             <div className="text-center text-muted-foreground py-8">
+               No pending admissions found.
+             </div>
+          ) : (
+            pending.map(p => (
+              <div key={p.id} className="bg-card border rounded-lg p-4 space-y-4 shadow-sm relative">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10 border">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {p.studentName?.substring(0, 2).toUpperCase() || <User size={16} />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-base truncate">{p.studentName}</div>
+                    <div className="text-xs text-muted-foreground">ID: #{p.id}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone size={14} />
+                    <span className="truncate">{p.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building size={14} />
+                    <span className="truncate font-medium">{p.hostelCode}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <BedDouble size={14} />
+                    <span className="truncate">Room {p.roomNumber}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEdit(p)}
+                    className="flex-1 text-slate-600 bg-slate-100"
+                  >
+                    <Edit2 size={14} className="mr-1.5" /> Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleApprove(p)}
+                    className="flex-1 bg-green-500/10 text-green-700 border-green-500/30"
+                  >
+                    <Check size={14} className="mr-1.5" /> Approve
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleReject(p.id!)}
+                    className="flex-1 text-red-600 bg-red-50"
+                  >
+                    <X size={14} className="mr-1.5" /> Reject
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <Dialog open={!!editingAdmission} onOpenChange={(open) => !open && setEditingAdmission(null)}>
+        <DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-auto overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Edit Admission Request</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Student Name</label>
+                <Input required value={editFormData.studentName || ''} onChange={e => setEditFormData({...editFormData, studentName: e.target.value})} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Email</label>
+                <Input type="email" required value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Phone</label>
+                <Input required pattern="^\d{10}$" title="Phone must be exactly 10 digits" value={editFormData.phone || ''} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Parent Phone</label>
+                <Input required pattern="^\d{10}$" title="Parent phone must be exactly 10 digits" value={editFormData.parentPhone || ''} onChange={e => setEditFormData({...editFormData, parentPhone: e.target.value})} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Father's Name</label>
+                <Input required value={editFormData.fatherName || ''} onChange={e => setEditFormData({...editFormData, fatherName: e.target.value})} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Aadhaar</label>
+                <Input required pattern="^\d{12}$" title="Aadhaar must be exactly 12 digits" value={editFormData.aadhaarNumber || ''} onChange={e => setEditFormData({...editFormData, aadhaarNumber: e.target.value})} />
+              </div>
+              <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                <label className="text-sm font-medium">Address</label>
+                <textarea required value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2}></textarea>
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setEditingAdmission(null)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

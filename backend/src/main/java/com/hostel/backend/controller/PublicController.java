@@ -71,7 +71,7 @@ public class PublicController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid hostel selection"));
                 
         // Look up room
-        com.hostel.backend.entity.Room room = roomRepository.findByHostelIdAndRoomNumber(hostel.getId(), request.getRoomNumber())
+        com.hostel.backend.entity.Room room = roomRepository.findByHostelIdAndRoomNumberAndIsDeletedFalse(hostel.getId(), request.getRoomNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid room selection"));
                 
         // Look up bed
@@ -100,15 +100,23 @@ public class PublicController {
     }
 
     @GetMapping("/students/lookup")
-    public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone) {
+    public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone, @RequestParam String studentId) {
         String phoneHash = com.hostel.backend.security.EncryptionContext.hash(phone);
         List<Student> students = studentRepository.findByPhoneHashAndIsDeletedFalse(phoneHash);
         if (students == null || students.isEmpty()) {
-            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number"));
+            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number and Student ID combination"));
         }
         
-        // If there are multiple, just take the most recently added or first one for this demo
-        Student student = students.get(students.size() - 1);
+        // Find the student matching the provided studentId (System ID STU...)
+        Optional<Student> matchedStudentOpt = students.stream()
+                .filter(s -> s.getStudentId().equalsIgnoreCase(studentId))
+                .findFirst();
+                
+        if (matchedStudentOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number and Student ID combination"));
+        }
+        
+        Student student = matchedStudentOpt.get();
         
         List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
         List<Map<String, Object>> paymentSummary = existingPayments.stream().map(p -> {

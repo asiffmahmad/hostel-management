@@ -31,16 +31,28 @@ interface PaymentFormModalProps {
 export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormModalProps) => {
   const queryClient = useQueryClient();
 
+  const formatDueDate = (dateValue: any) => {
+    if (!dateValue) return new Date().toISOString().split('T')[0];
+    if (Array.isArray(dateValue)) {
+      return `${dateValue[0]}-${String(dateValue[1]).padStart(2, '0')}-${String(dateValue[2]).padStart(2, '0')}`;
+    }
+    // Also handle possible 'YYYY-MM-DD' strings
+    if (typeof dateValue === 'string') {
+      return dateValue.split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+
   const form = useForm<PaymentFormValues>({
     // @ts-ignore
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       studentId: initialData?.studentId || 0,
       amount: initialData?.amount || 0,
-      month: initialData?.month || new Date().toLocaleString('default', { month: 'long' }),
+      month: initialData?.month || new Date().toLocaleString('default', { month: 'long' }).toUpperCase(),
       year: initialData?.year || new Date().getFullYear().toString(),
       status: initialData?.status || 'PENDING',
-      dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
+      dueDate: formatDueDate(initialData?.dueDate),
       utrNumber: initialData?.utrNumber || '',
     },
   });
@@ -50,10 +62,10 @@ export const PaymentFormModal = ({ isOpen, onClose, initialData }: PaymentFormMo
       form.reset({
         studentId: initialData?.studentId || 0,
         amount: initialData?.amount || 0,
-        month: initialData?.month || new Date().toLocaleString('default', { month: 'long' }),
+        month: initialData?.month || new Date().toLocaleString('default', { month: 'long' }).toUpperCase(),
         year: initialData?.year || new Date().getFullYear().toString(),
         status: initialData?.status || 'PENDING',
-        dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
+        dueDate: formatDueDate(initialData?.dueDate),
         utrNumber: initialData?.utrNumber || '',
       });
     }

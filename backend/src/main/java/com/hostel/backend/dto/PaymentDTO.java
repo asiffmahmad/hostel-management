@@ -38,5 +38,7 @@ public class PaymentDTO {
     private String paymentSource;
     private String bankName;
     private LocalDateTime importedDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
 

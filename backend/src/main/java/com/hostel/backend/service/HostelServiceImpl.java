@@ -22,6 +22,7 @@ public class HostelServiceImpl implements HostelService {
     private final BedRepository bedRepository;
     private final PaymentRepository paymentRepository;
     private final HostelMapper hostelMapper;
+    private final com.hostel.backend.repository.RoomRepository roomRepository;
 
     @Override
     public HostelDTO createHostel(HostelDTO hostelDTO) {
@@ -101,12 +102,16 @@ public class HostelServiceImpl implements HostelService {
     private HostelDTO mapToDtoWithDynamicStats(Hostel hostel) {
         HostelDTO dto = hostelMapper.toDto(hostel);
         
-        int totalBeds = bedRepository.countBedsByHostelId(hostel.getId());
+        // Compute total beds by summing up capacity of all rooms in this hostel
+        int totalBeds = roomRepository.findByHostelIdAndIsDeletedFalse(hostel.getId()).stream()
+                .mapToInt(room -> room.getCapacity() != null ? room.getCapacity() : 0)
+                .sum();
+                
         int occupiedBeds = bedRepository.countBedsByHostelIdAndStatus(hostel.getId(), BedStatus.OCCUPIED);
         
         dto.setTotalBeds(totalBeds);
         dto.setOccupiedBeds(occupiedBeds);
-        dto.setVacantBeds(totalBeds - occupiedBeds);
+        dto.setVacantBeds(Math.max(0, totalBeds - occupiedBeds));
         
         Double currentCollection = paymentRepository.sumAmountByHostelIdAndStatus(hostel.getId(), "PAID");
         Double pendingCollection = paymentRepository.sumAmountByHostelIdAndStatus(hostel.getId(), "PENDING");

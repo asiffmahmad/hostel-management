@@ -11,6 +11,7 @@ import com.hostel.backend.repository.ExpenseRepository;
 import com.hostel.backend.repository.HostelRepository;
 import com.hostel.backend.repository.PaymentRepository;
 import com.hostel.backend.repository.StudentRepository;
+import com.hostel.backend.repository.RoomRepository;
 import com.hostel.backend.service.DashboardService;
 import com.hostel.backend.dto.FinancialReportDTO;
 import com.hostel.backend.dto.MonthlyFinancialData;
@@ -32,6 +33,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final PaymentRepository paymentRepository;
     private final BedRepository bedRepository;
     private final ExpenseRepository expenseRepository;
+    private final RoomRepository roomRepository;
 
     @Override
     public DashboardStatsDTO getDashboardStats(Long hostelId) {
@@ -46,8 +48,8 @@ public class DashboardServiceImpl implements DashboardService {
                 : studentRepository.countByStatusAndBedIsNotNullAndIsDeletedFalse("ACTIVE");
         
         long totalBeds = hostelId != null
-                ? bedRepository.countBedsByHostelId(hostelId)
-                : bedRepository.findByIsDeletedFalse().size(); // Or use a direct count method if added
+                ? roomRepository.findByHostelIdAndIsDeletedFalse(hostelId).stream().mapToInt(r -> r.getCapacity() != null ? r.getCapacity() : 0).sum()
+                : roomRepository.findByIsDeletedFalse().stream().mapToInt(r -> r.getCapacity() != null ? r.getCapacity() : 0).sum();
                 
         long occupiedBeds = hostelId != null
                 ? bedRepository.countBedsByHostelIdAndStatus(hostelId, BedStatus.OCCUPIED)
@@ -84,7 +86,7 @@ public class DashboardServiceImpl implements DashboardService {
         
         for (Hostel h : hostels) {
             Map<String, Object> map = new HashMap<>();
-            int hTotalBeds = bedRepository.countBedsByHostelId(h.getId());
+            int hTotalBeds = roomRepository.findByHostelIdAndIsDeletedFalse(h.getId()).stream().mapToInt(r -> r.getCapacity() != null ? r.getCapacity() : 0).sum();
             int hOccupiedBeds = bedRepository.countBedsByHostelIdAndStatus(h.getId(), BedStatus.OCCUPIED);
             map.put("name", h.getName());
             map.put("occupied", hOccupiedBeds);
