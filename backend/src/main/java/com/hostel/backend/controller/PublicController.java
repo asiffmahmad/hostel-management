@@ -100,23 +100,15 @@ public class PublicController {
     }
 
     @GetMapping("/students/lookup")
-    public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone, @RequestParam String studentId) {
+    public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone) {
         String phoneHash = com.hostel.backend.security.EncryptionContext.hash(phone);
         List<Student> students = studentRepository.findByPhoneHashAndIsDeletedFalse(phoneHash);
         if (students == null || students.isEmpty()) {
-            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number and Student ID combination"));
+            return ResponseEntity.status(404).body(new MessageResponse("No active student found with this phone number. Please check the number and try again."));
         }
         
-        // Find the student matching the provided studentId (System ID STU...)
-        Optional<Student> matchedStudentOpt = students.stream()
-                .filter(s -> s.getStudentId().equalsIgnoreCase(studentId))
-                .findFirst();
-                
-        if (matchedStudentOpt.isEmpty()) {
-            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number and Student ID combination"));
-        }
-        
-        Student student = matchedStudentOpt.get();
+        // Use the first active student found for this phone number
+        Student student = students.get(0);
         
         List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
         List<Map<String, Object>> paymentSummary = existingPayments.stream().map(p -> {

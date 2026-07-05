@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, User, Building2 } from 'lucide-react';
+import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, Building2 } from 'lucide-react';
 import api from '@/services/api';
 import { Badge } from '@/components/ui/badge';
 
@@ -42,14 +42,10 @@ export default function PaymentConfirmation() {
       setErrorMsg('Please enter a valid 10-digit phone number.');
       return;
     }
-    if (!studentIdInput.trim()) {
-      setErrorMsg('Please enter your Student ID.');
-      return;
-    }
 
     try {
       setLoading(true);
-      const { data } = await api.get(`/public/students/lookup?phone=${phone}&studentId=${encodeURIComponent(studentIdInput.trim())}`);
+      const { data } = await api.get(`/public/students/lookup?phone=${phone}`);
       setStudent(data);
       setAmount(data.monthlyRent?.toString() || '');
       setStep(2);
@@ -95,7 +91,6 @@ export default function PaymentConfirmation() {
   const resetForm = () => {
     setStep(1);
     setPhone('');
-    setStudentIdInput('');
     setStudent(null);
     setUtrNumber('');
     setAmount('');
@@ -123,7 +118,7 @@ export default function PaymentConfirmation() {
           <Card className="border-0 shadow-xl shadow-primary/5 bg-white/80 backdrop-blur-xl">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl">Step 1: Student Lookup</CardTitle>
-              <CardDescription>Enter your registered phone number to find your details.</CardDescription>
+              <CardDescription>Enter your registered phone number to find your payment details.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLookup} className="space-y-4">
@@ -137,18 +132,7 @@ export default function PaymentConfirmation() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       maxLength={10}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Student ID</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      placeholder="e.g. STU12345678"
-                      className={`pl-10 h-12 text-lg bg-white/50 focus:bg-white ${errorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      value={studentIdInput}
-                      onChange={(e) => setStudentIdInput(e.target.value.toUpperCase())}
+                      autoComplete="off"
                     />
                   </div>
                   {errorMsg && <p className="text-sm text-red-500 mt-1 font-medium">{errorMsg}</p>}
@@ -158,7 +142,7 @@ export default function PaymentConfirmation() {
                   className="w-full h-12 text-base font-medium shadow-md shadow-primary/20" 
                   disabled={loading}
                 >
-                  {loading ? 'Searching...' : 'Find Student'}
+                  {loading ? 'Searching...' : 'Find My Details'}
                 </Button>
               </form>
             </CardContent>
@@ -185,7 +169,7 @@ export default function PaymentConfirmation() {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900">{student.name}</p>
-                    <p className="text-xs font-mono text-muted-foreground">ID: STU-{student.id}</p>
+                    <p className="text-xs text-muted-foreground">{student.hostelName || ''}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
