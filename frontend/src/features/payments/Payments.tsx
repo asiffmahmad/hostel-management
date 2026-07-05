@@ -187,7 +187,7 @@ const Payments = () => {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline" className="text-xs capitalize">
-                        {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : '✍️ Manual'}
+                        {(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank' : (payment as any).paymentSource === 'PUBLIC_FORM' ? '🌐 Web' : '✍️ Manual'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -196,9 +196,11 @@ const Payments = () => {
                         className={
                           payment.status === 'PAID' 
                             ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                            : payment.status?.startsWith('PENDING')
-                              ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
-                              : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                            : payment.status === 'PENDING_VERIFICATION'
+                              ? 'bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-none'
+                              : payment.status?.startsWith('PENDING')
+                                ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                                : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                         }
                       >
                         {payment.status}
@@ -246,9 +248,11 @@ const Payments = () => {
                     className={
                       payment.status === 'PAID' 
                         ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25 border-none' 
-                        : payment.status?.startsWith('PENDING')
-                          ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
-                          : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
+                        : payment.status === 'PENDING_VERIFICATION'
+                          ? 'bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-none'
+                          : payment.status?.startsWith('PENDING')
+                            ? 'bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 border-none'
+                            : 'bg-red-500/15 text-red-600 hover:bg-red-500/25 border-none'
                     }
                   >
                     {payment.status}
@@ -274,7 +278,7 @@ const Payments = () => {
                   </div>
                   <div className="flex flex-col col-span-2">
                     <span className="text-xs text-muted-foreground">Source</span>
-                    <span className="capitalize">{(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank Import' : '✍️ Manual Entry'}</span>
+                    <span className="capitalize">{(payment as any).paymentSource === 'BANK_IMPORT' ? '🏦 Bank Import' : (payment as any).paymentSource === 'PUBLIC_FORM' ? '🌐 Web Submission' : '✍️ Manual Entry'}</span>
                   </div>
                 </div>
 

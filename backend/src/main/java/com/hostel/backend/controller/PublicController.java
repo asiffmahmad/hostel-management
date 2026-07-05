@@ -17,6 +17,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.hostel.backend.repository.StudentRepository;
+import com.hostel.backend.repository.PaymentRepository;
+import com.hostel.backend.entity.Payment;
+import com.hostel.backend.entity.Student;
+import com.hostel.backend.dto.PublicPaymentConfirmRequest;
+import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -31,6 +39,8 @@ public class PublicController {
 
     private final HostelRepository hostelRepository;
     private final RoomRepository roomRepository;
+    private final StudentRepository studentRepository;
+    private final PaymentRepository paymentRepository;
 
     @GetMapping("/hostels")
     public ResponseEntity<List<HostelDTO>> getHostels() {
@@ -83,5 +93,75 @@ public class PublicController {
 
         studentService.createStudent(studentDTO);
         return ResponseEntity.ok(new MessageResponse("Student registered and assigned successfully"));
+    }
+
+    @GetMapping("/students/lookup")
+    public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone) {
+        Optional<Student> studentOpt = studentRepository.findByPhoneAndIsDeletedFalse(phone);
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(new MessageResponse("No student found with this phone number"));
+        }
+        
+        Student student = studentOpt.get();
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", student.getId());
+        response.put("name", student.getName());
+        response.put("monthlyRent", student.getMonthlyRent());
+        
+        if (student.getBed() != null && student.getBed().getRoom() != null) {
+            response.put("roomNumber", student.getBed().getRoom().getRoomNumber());
+            if (student.getBed().getRoom().getHostel() != null) {
+                response.put("hostelName", student.getBed().getRoom().getHostel().getName());
+            }
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/payments/confirm")
+    public ResponseEntity<MessageResponse> confirmPayment(@Valid @RequestBody PublicPaymentConfirmRequest request) {
+        Student student = studentRepository.findById(request.getStudentId())
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+                
+        if (paymentRepository.existsByUtrNumber(request.getUtrNumber())) {
+            throw new IllegalArgumentException("UTR Number already exists. Payment might have been confirmed already.");
+        }
+        
+        List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
+        Optional<Payment> pendingPayment = existingPayments.stream()
+                .filter(p -> p.getMonth().equalsIgnoreCase(request.getMonth()) 
+                        && p.getYear().equals(request.getYear())
+                        && p.getStatus() != null 
+                        && p.getStatus().startsWith("PENDING"))
+                .findFirst();
+                
+        if (pendingPayment.isPresent()) {
+            Payment payment = pendingPayment.get();
+            payment.setUtrNumber(request.getUtrNumber());
+            payment.setStatus("PENDING_VERIFICATION");
+            
+            // if amount paid is >= expected amount, we set dueAmount correctly later, 
+            // for now, we just update the amount they confirmed to have paid.
+            payment.setAmount(request.getAmount());
+            if (payment.getExpectedAmount() != null) {
+                payment.setDueAmount(Math.max(0, payment.getExpectedAmount() - request.getAmount()));
+            }
+            payment.setPaymentSource("PUBLIC_FORM");
+            paymentRepository.save(payment);
+        } else {
+            Payment newPayment = new Payment();
+            newPayment.setStudent(student);
+            newPayment.setMonth(request.getMonth().toUpperCase());
+            newPayment.setYear(request.getYear());
+            newPayment.setAmount(request.getAmount());
+            newPayment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
+            newPayment.setDueAmount(Math.max(0, newPayment.getExpectedAmount() - request.getAmount()));
+            newPayment.setUtrNumber(request.getUtrNumber());
+            newPayment.setStatus("PENDING_VERIFICATION");
+            newPayment.setPaymentSource("PUBLIC_FORM");
+            paymentRepository.save(newPayment);
+        }
+        
+        return ResponseEntity.ok(new MessageResponse("Payment details submitted successfully. Pending verification."));
     }
 }

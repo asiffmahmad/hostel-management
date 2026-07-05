@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Student> {
@@ -14,6 +15,8 @@ public interface StudentRepository extends JpaRepository<Student, Long>, org.spr
     List<Student> findByBedId(Long bedId);
     
     boolean existsByStudentId(String studentId);
+    
+    Optional<Student> findByPhoneAndIsDeletedFalse(String phone);
     
     @EntityGraph(attributePaths = {"bed", "bed.room", "bed.room.hostel"})
     List<Student> findByIsDeletedFalse();

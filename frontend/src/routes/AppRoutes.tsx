@@ -7,6 +7,7 @@ const AdminAdmissions = lazy(() => import('@/components/AdminAdmissions'));
 import AppLayout from '@/components/layout/AppLayout';
 const AdmissionWizard = lazy(() => import('@/features/public/AdmissionWizard'));
 const AdmissionSuccess = lazy(() => import('@/components/AdmissionSuccess'));
+const PaymentConfirmation = lazy(() => import('@/features/public/PaymentConfirmation'));
 
 // Lazy load feature components
 const Login = lazy(() => import('@/features/auth/Login'));
@@ -46,6 +47,7 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
           <Route path="/admission" element={<AdmissionWizard />} />
           <Route path="/admission/success" element={<AdmissionSuccess />} />
+          <Route path="/payment-confirm" element={<PaymentConfirmation />} />
         
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
