@@ -128,7 +128,7 @@ export default function PaymentConfirmation() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                       placeholder="e.g. 9876543210"
-                      className={`pl-10 h-12 text-lg bg-white/50 focus:bg-white ${errorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      className={`pl-10 sm:pl-10 h-12 sm:h-12 text-base sm:text-base bg-white/50 focus:bg-white ${errorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       maxLength={10}
@@ -241,7 +241,7 @@ export default function PaymentConfirmation() {
                       <Input
                         type="number"
                         placeholder="e.g. 5000"
-                        className="h-11 bg-white/50"
+                        className="h-11 sm:h-11 bg-white/50"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         min={1}
@@ -252,7 +252,7 @@ export default function PaymentConfirmation() {
                       <label className="text-sm font-medium text-slate-700">UTR / Reference Number</label>
                       <Input
                         placeholder="Enter 12-digit UTR from your bank"
-                        className={`h-11 font-mono text-sm bg-white/50 uppercase ${utrErrorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        className={`h-11 sm:h-11 font-mono text-sm sm:text-sm bg-white/50 uppercase ${utrErrorMsg ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         value={utrNumber}
                         onChange={(e) => setUtrNumber(e.target.value.toUpperCase().slice(0, 12))}
                         maxLength={12}
