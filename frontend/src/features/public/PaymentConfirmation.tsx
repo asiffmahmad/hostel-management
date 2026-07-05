@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, Building2 } from 'lucide-react';
+import { Search, ShieldCheck, CheckCircle2, IndianRupee, MapPin, BedDouble, User, Building2 } from 'lucide-react';
 import api from '@/services/api';
 import { Badge } from '@/components/ui/badge';
 
