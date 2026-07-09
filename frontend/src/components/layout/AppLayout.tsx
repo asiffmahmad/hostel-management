@@ -83,6 +83,7 @@ const AppLayout = () => {
     { name: 'Hostels', path: '/hostels-overview', icon: Building, menuKey: 'MENU_HOSTELS_ENABLED' },
     { name: 'Students', path: '/students', icon: Users, menuKey: 'MENU_STUDENTS_ENABLED' },
     { name: 'Payments', path: '/payments', icon: CreditCard, menuKey: 'MENU_PAYMENTS_ENABLED' },
+    { name: 'Payment Validation', path: '/external-payments', icon: Landmark, menuKey: 'MENU_PAYMENTS_ENABLED' },
     { name: 'Expenses', path: '/expenses', icon: Receipt, menuKey: 'MENU_EXPENSES_ENABLED' },
     { name: 'Give Complaint', path: '/complaints/give', icon: MessageSquareWarning, menuKey: 'MENU_GIVE_COMPLAINTS_ENABLED' },
     { name: 'View Complaints', path: '/complaints/view', icon: MessageSquareWarning, menuKey: 'MENU_VIEW_COMPLAINTS_ENABLED' },

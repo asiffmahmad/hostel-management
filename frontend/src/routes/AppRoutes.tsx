@@ -17,6 +17,7 @@ const HostelExplorer = lazy(() => import('@/features/hostels/HostelExplorer'));
 const Rooms = lazy(() => import('@/features/hostels/Rooms'));
 const Students = lazy(() => import('@/features/students/Students'));
 const Payments = lazy(() => import('@/features/payments/Payments'));
+const ExternalPaymentValidation = lazy(() => import('@/features/payments/ExternalPaymentValidation'));
 const Reports = lazy(() => import('@/features/reports/Reports'));
 const FinancialDashboard = lazy(() => import('@/features/reports/FinancialDashboard'));
 const GiveComplaints = lazy(() => import('@/features/complaints/GiveComplaints'));
@@ -59,6 +60,7 @@ const AppRoutes = () => {
             <Route path="/hostels" element={<Hostels />} />
             <Route path="/hostels/:id/rooms" element={<Rooms />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/external-payments" element={<ExternalPaymentValidation />} />
             <Route path="/complaints/give" element={<GiveComplaints />} />
             <Route path="/complaints/view" element={<ViewComplaints />} />
             <Route path="/reports" element={<Reports />} />

@@ -46,6 +46,7 @@ public class PublicController {
     private final StudentRepository studentRepository;
     private final PaymentRepository paymentRepository;
     private final BankTransactionRepository bankTransactionRepository;
+    private final com.hostel.backend.repository.ExternalPaymentRepository externalPaymentRepository;
 
     @GetMapping("/hostels")
     public ResponseEntity<List<HostelDTO>> getHostels() {
@@ -144,58 +145,26 @@ public class PublicController {
         Student student = studentRepository.findById(request.getStudentId())
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
                 
-        if (paymentRepository.existsByUtrNumber(request.getUtrNumber())) {
-            throw new IllegalArgumentException("UTR Number already exists. Payment might have been confirmed already.");
+        if (externalPaymentRepository.existsByUtrNumberAndIsDeletedFalse(request.getUtrNumber())) {
+            throw new IllegalArgumentException("This UTR has already been submitted and is pending or validated.");
         }
         
-        Optional<BankTransaction> bankTxnOpt = bankTransactionRepository.findByUtrNumberAndIsDeletedFalse(request.getUtrNumber());
-        if (bankTxnOpt.isEmpty()) {
-            throw new IllegalArgumentException("UTR not found in bank records. Please check the UTR number or wait for the bank transaction to be imported by the admin.");
+        if (bankTransactionRepository.findByUtrNumberAndIsDeletedFalse(request.getUtrNumber())
+                .filter(com.hostel.backend.entity.BankTransaction::getIsMapped).isPresent()) {
+            throw new IllegalArgumentException("This UTR has already been mapped to a payment.");
         }
         
-        BankTransaction bankTxn = bankTxnOpt.get();
-        if (bankTxn.getIsMapped()) {
-            throw new IllegalArgumentException("This UTR has already been mapped to another student's payment.");
-        }
+        com.hostel.backend.entity.ExternalPayment ep = new com.hostel.backend.entity.ExternalPayment();
+        ep.setStudent(student);
+        ep.setMonth(request.getMonth().toUpperCase());
+        ep.setYear(request.getYear());
+        ep.setUtrNumber(request.getUtrNumber().toUpperCase());
+        ep.setAmount(request.getAmount() != null ? request.getAmount().doubleValue() : 0.0);
+        ep.setTransactionDate(java.time.LocalDate.now());
+        ep.setValidationStatus("PENDING");
         
-        // At this point, the UTR is valid and unmapped. Map it!
-        List<Payment> existingPayments = paymentRepository.findByStudentId(student.getId());
-        Optional<Payment> pendingPayment = existingPayments.stream()
-                .filter(p -> p.getMonth().equalsIgnoreCase(request.getMonth()) 
-                        && p.getYear().equals(request.getYear())
-                        && p.getStatus() != null 
-                        && p.getStatus().startsWith("PENDING"))
-                .findFirst();
-                
-        Payment payment;
-        if (pendingPayment.isPresent()) {
-            payment = pendingPayment.get();
-        } else {
-            payment = new Payment();
-            payment.setStudent(student);
-            payment.setMonth(request.getMonth().toUpperCase());
-            payment.setYear(request.getYear());
-            payment.setExpectedAmount(student.getMonthlyRent() != null ? student.getMonthlyRent() : 0.0);
-        }
+        externalPaymentRepository.save(ep);
         
-        payment.setUtrNumber(request.getUtrNumber());
-        // Map to bankTxn
-        payment.setAmount(bankTxn.getAmount().doubleValue());
-        if (payment.getExpectedAmount() != null) {
-            payment.setDueAmount(Math.max(0, payment.getExpectedAmount() - payment.getAmount()));
-        }
-        payment.setStatus("PAID"); // Automatically paid since it matched BankTransaction!
-        payment.setPaymentSource("PUBLIC_FORM");
-        payment = paymentRepository.save(payment);
-        
-        // Update BankTransaction to mark as mapped
-        bankTxn.setIsMapped(true);
-        bankTxn.setMappedStudentId(student.getId());
-        bankTxn.setMappedPaymentId(payment.getId());
-        bankTxn.setMappedAt(LocalDateTime.now());
-        bankTxn.setMappedBy("PUBLIC_FORM_AUTO");
-        bankTransactionRepository.save(bankTxn);
-        
-        return ResponseEntity.ok(new MessageResponse("Payment automatically verified and successful!"));
+        return ResponseEntity.ok(new MessageResponse("Payment details submitted successfully! The admin will validate your UTR shortly."));
     }
 }
