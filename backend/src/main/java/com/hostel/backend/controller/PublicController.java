@@ -59,9 +59,17 @@ public class PublicController {
     }
 
     @GetMapping("/rooms/{id}/beds")
-    public ResponseEntity<List<Bed>> getVacantBedsForRoom(@PathVariable Long id) {
-        List<Bed> vacantBeds = bedRepository.findByRoomId(id).stream()
+    public ResponseEntity<List<com.hostel.backend.dto.BedDTO>> getVacantBedsForRoom(@PathVariable Long id) {
+        List<com.hostel.backend.dto.BedDTO> vacantBeds = bedRepository.findByRoomId(id).stream()
                 .filter(bed -> bed.getStatus() == BedStatus.VACANT)
+                .map(bed -> {
+                    com.hostel.backend.dto.BedDTO dto = new com.hostel.backend.dto.BedDTO();
+                    dto.setId(bed.getId());
+                    dto.setBedNumber(bed.getBedNumber());
+                    dto.setBedName(bed.getBedName());
+                    dto.setStatus(bed.getStatus());
+                    return dto;
+                })
                 .toList();
         return ResponseEntity.ok(vacantBeds);
     }
