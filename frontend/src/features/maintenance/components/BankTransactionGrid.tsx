@@ -249,7 +249,7 @@ export function BankTransactionGrid({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="whitespace-nowrap font-semibold">
+                  <TableHead key={header.id} className={`whitespace-nowrap font-semibold ${['description', 'transactionType', 'accountNumber', 'isMapped', 'mappedStudentId'].includes(header.column.id) ? 'hidden md:table-cell' : ''}`}>
                     {header.isPlaceholder
                       ? null
                       : (
@@ -281,7 +281,7 @@ export function BankTransactionGrid({
                   className="hover:bg-muted/50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap py-3">
+                    <TableCell key={cell.id} className={`whitespace-nowrap py-3 ${['description', 'transactionType', 'accountNumber', 'isMapped', 'mappedStudentId'].includes(cell.column.id) ? 'hidden md:table-cell' : ''}`}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

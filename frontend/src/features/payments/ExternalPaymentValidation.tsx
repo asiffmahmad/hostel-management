@@ -41,7 +41,7 @@ const ExternalPaymentValidation = () => {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('PENDING');
   const [dateFilter, setDateFilter] = useState('');
 
   const fetchPayments = async () => {
@@ -193,7 +193,7 @@ const ExternalPaymentValidation = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -281,6 +281,53 @@ const ExternalPaymentValidation = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+          
+          {/* Mobile View */}
+          <div className="grid grid-cols-1 gap-4 md:hidden p-4 bg-muted/20">
+            {filteredPayments.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                No external payments found.
+              </div>
+            ) : (
+              filteredPayments.map((payment) => (
+                <Card key={payment.id} className="p-4 flex flex-col gap-3 shadow-sm border-muted">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium text-lg text-foreground">{payment.studentName}</div>
+                      <div className="text-xs text-muted-foreground">{payment.phone} • {payment.hostelName || 'N/A'}</div>
+                    </div>
+                    <div className="font-bold text-lg text-primary">₹{payment.amount}</div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{payment.utrNumber}</span>
+                    <span className="text-muted-foreground text-xs">{payment.month} {payment.year}</span>
+                  </div>
+                  
+                  {payment.failureReason && (
+                    <div className="text-xs text-destructive bg-destructive/10 p-2 rounded-md">
+                      {payment.failureReason}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center mt-2 pt-3 border-t">
+                    <div>{getStatusBadge(payment.validationStatus)}</div>
+                    {payment.validationStatus === 'PENDING' && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => handleValidateSingle(payment.id)}
+                        disabled={validatingId === payment.id || validatingAll}
+                        className="shadow-sm"
+                      >
+                        {validatingId === payment.id ? '...' : 'Validate UTR'}
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
