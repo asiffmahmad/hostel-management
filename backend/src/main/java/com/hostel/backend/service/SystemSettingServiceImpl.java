@@ -6,11 +6,13 @@ import com.hostel.backend.exception.ResourceNotFoundException;
 import com.hostel.backend.repository.SystemSettingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class SystemSettingServiceImpl implements SystemSettingService {
 
