@@ -35,8 +35,10 @@ public class PayloadEncryptionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Ignore actuator and health endpoints from encryption
-        if (request.getRequestURI().startsWith("/actuator") || request.getRequestURI().startsWith("/api/public/health")) {
+        // Ignore OPTIONS (CORS preflight), actuator, and health endpoints from encryption
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod()) || 
+            request.getRequestURI().startsWith("/actuator") || 
+            request.getRequestURI().startsWith("/api/public/health")) {
             filterChain.doFilter(request, response);
             return;
         }
