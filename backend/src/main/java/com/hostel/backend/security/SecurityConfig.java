@@ -91,12 +91,15 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
+        log.info("Configured Allowed Origins string: [{}]", allowedOrigins);
         CorsConfiguration configuration = new CorsConfiguration();
         // Explicit origins required — cannot use * with allowCredentials=true
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .map(origin -> origin.replaceAll("^[\"']|[\"']$", "")) // Remove leading/trailing quotes
                 .collect(java.util.stream.Collectors.toList());
+        log.info("Parsed CORS Allowed Origins: {}", origins);
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "x-requested-with"));
