@@ -93,7 +93,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Explicit origins required — cannot use * with allowCredentials=true
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .map(origin -> origin.replaceAll("^[\"']|[\"']$", "")) // Remove leading/trailing quotes
+                .collect(java.util.stream.Collectors.toList());
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "x-requested-with"));
         configuration.setExposedHeaders(List.of("x-auth-token", "set-cookie"));
