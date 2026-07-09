@@ -42,6 +42,7 @@ const ExternalPaymentValidation = () => {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('');
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -122,7 +123,10 @@ const ExternalPaymentValidation = () => {
       
     const matchesStatus = statusFilter === 'ALL' || p.validationStatus === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    // Support filtering by date
+    const matchesDate = !dateFilter || p.transactionDate === dateFilter;
+    
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const pendingCount = payments.filter(p => p.validationStatus === 'PENDING').length;
@@ -153,18 +157,25 @@ const ExternalPaymentValidation = () => {
         <CardHeader className="pb-3 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <CardTitle>Transactions</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-60">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by student, phone, UTR..."
+                  placeholder="Search by student, UTR..."
                   className="pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              <Input
+                type="date"
+                className="w-full sm:w-40"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                title="Filter by Transaction Date"
+              />
               <select 
-                className="w-full sm:w-40 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full sm:w-36 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -173,6 +184,11 @@ const ExternalPaymentValidation = () => {
                 <option value="VALIDATED">Validated</option>
                 <option value="FAILED">Failed</option>
               </select>
+              {dateFilter && (
+                <Button variant="ghost" size="sm" onClick={() => setDateFilter('')} className="text-xs">
+                  Clear Date
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -183,8 +199,10 @@ const ExternalPaymentValidation = () => {
                 <TableRow>
                   <TableHead>Student</TableHead>
                   <TableHead>Hostel / Term</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>UTR Number</TableHead>
                   <TableHead>Submitted Amt</TableHead>
+                  <TableHead>Due Amt</TableHead>
                   <TableHead>Validation</TableHead>
                   <TableHead>Month Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -193,7 +211,7 @@ const ExternalPaymentValidation = () => {
               <TableBody>
                 {filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                       No external payments found.
                     </TableCell>
                   </TableRow>
@@ -209,13 +227,24 @@ const ExternalPaymentValidation = () => {
                         <div className="text-xs text-muted-foreground">{payment.month} {payment.year}</div>
                       </TableCell>
                       <TableCell>
+                        <div className="text-sm font-medium">
+                          {payment.transactionDate ? new Date(payment.transactionDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <span className="font-mono text-sm">{payment.utrNumber}</span>
-                        {payment.transactionDate && (
-                          <div className="text-xs text-muted-foreground">{payment.transactionDate}</div>
-                        )}
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">₹{payment.amount}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-destructive">
+                          ₹{Math.max(0, payment.totalMonthDue - payment.totalMonthPaid)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1 items-start">
