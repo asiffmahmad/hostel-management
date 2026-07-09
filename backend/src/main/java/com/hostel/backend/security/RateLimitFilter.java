@@ -11,6 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -18,29 +20,39 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final ConcurrentHashMap<String, List<Long>> requestCounts = new ConcurrentHashMap<>();
     private static final int MAX_REQUESTS_PER_MINUTE = 5;
-    private static final long TIME_WINDOW_MS = 60000;
+    private static final long TIME_WINDOW_MS = 60_000;
+
+    /** Endpoints that require rate limiting — all high-risk public POST/GET paths. */
+    private static final Set<String> RATE_LIMITED_PATHS = Set.of(
+        "/api/public/admission/requests",
+        "/api/public/payments/confirm",
+        "/api/public/students/lookup",
+        "/api/public/students/register",
+        "/api/auth/login"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Only apply rate limiting to the public admission submission endpoint
-        if (request.getRequestURI().equals("/api/public/admission/requests") && request.getMethod().equalsIgnoreCase("POST")) {
+        String uri = request.getRequestURI();
+        if (RATE_LIMITED_PATHS.contains(uri)) {
             String clientIp = getClientIp(request);
+            // Key by IP + path so limits are per-endpoint, not shared across endpoints
+            String rateLimitKey = clientIp + "|" + uri;
             long currentTime = System.currentTimeMillis();
 
-            requestCounts.putIfAbsent(clientIp, new ArrayList<>());
-            List<Long> timestamps = requestCounts.get(clientIp);
+            requestCounts.putIfAbsent(rateLimitKey, new ArrayList<>());
+            List<Long> timestamps = requestCounts.get(rateLimitKey);
 
             synchronized (timestamps) {
-                // Remove timestamps outside the 1-minute window
                 timestamps.removeIf(t -> currentTime - t > TIME_WINDOW_MS);
 
                 if (timestamps.size() >= MAX_REQUESTS_PER_MINUTE) {
                     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                     response.setContentType("application/json");
                     response.getWriter().write("{\"error\": \"Too many requests. Please try again later.\"}");
-                    return; // Block request
+                    return;
                 }
 
                 timestamps.add(currentTime);
@@ -50,11 +62,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Extracts the real client IP, respecting reverse-proxy X-Forwarded-For headers.
+     * Takes only the first (leftmost) IP in the chain to prevent header spoofing.
+     */
     private String getClientIp(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null || xfHeader.isEmpty()) {
-            return request.getRemoteAddr();
+        if (xfHeader != null && !xfHeader.isBlank()) {
+            return xfHeader.split(",")[0].trim();
         }
-        return xfHeader.split(",")[0];
+        return request.getRemoteAddr();
     }
 }

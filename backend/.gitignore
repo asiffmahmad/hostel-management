@@ -35,5 +35,6 @@ build/
 ### Environment files ###
 .env
 .env.*
+!.env.example
 *.properties
 !application*.properties

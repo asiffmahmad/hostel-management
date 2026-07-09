@@ -45,10 +45,11 @@ const Login = () => {
         username: data.usernameOrEmail,
         password: data.password
       });
-      
-      const { token, id, username, email, roles } = response.data;
-      
-      login(token, { id, username, email, roles });
+
+      // The server sets the HttpOnly auth_token cookie automatically.
+      // We only receive user info in the response body.
+      const { id, username, email, roles } = response.data;
+      login({ id, username, email: email || '', roles });
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials or server error.');

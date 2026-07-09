@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -137,7 +138,7 @@ export default function HostelExplorer() {
       const { data } = await api.get(`/students/${id}`);
       setStudentCache(prev => ({ ...prev, [id]: data }));
     } catch (e) {
-      console.error(e);
+      logger.error('Operation failed', e);
     }
   };
 

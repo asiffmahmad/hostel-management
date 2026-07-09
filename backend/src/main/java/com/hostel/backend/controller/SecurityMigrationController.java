@@ -26,4 +26,16 @@ public class SecurityMigrationController {
             return ResponseEntity.internalServerError().body("Migration failed: " + e.getMessage());
         }
     }
+
+    // Only allow ADMIN or OWNER to run this migration
+    @PostMapping("/rotate-keys")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    public ResponseEntity<String> rotateKeys() {
+        try {
+            securityMigrationService.rotateKeys();
+            return ResponseEntity.ok("Key Rotation Migration completed successfully. All data is now encrypted with the new primary keys.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Key Rotation failed: " + e.getMessage());
+        }
+    }
 }

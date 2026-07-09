@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import HostelFilter from '@/components/HostelFilter';
 import api from '@/services/api';
+import logger from '@/utils/logger';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -64,7 +65,7 @@ const AppLayout = () => {
         });
         setSettings(settingsMap);
       } catch (err) {
-        console.error('Failed to load settings', err);
+        logger.error('Failed to load settings', err);
       }
     };
     fetchSettings();
@@ -72,8 +73,8 @@ const AppLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

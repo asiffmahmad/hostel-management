@@ -6,6 +6,8 @@ import com.hostel.backend.service.AdmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -29,24 +31,30 @@ public class AdminAdmissionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AdmissionRequestResponseDTO> updateAdmission(@PathVariable Long id, @RequestBody com.hostel.backend.dto.AdmissionRequestCreateDTO dto) {
-        String adminUsername = "admin"; // placeholder
+    public ResponseEntity<AdmissionRequestResponseDTO> updateAdmission(
+            @PathVariable Long id,
+            @RequestBody com.hostel.backend.dto.AdmissionRequestCreateDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String adminUsername = userDetails.getUsername();
         AdmissionRequestResponseDTO updated = admissionService.updateRequest(id, dto, adminUsername);
         return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<AdmissionRequestResponseDTO> approveAdmission(@PathVariable Long id) {
-        // In a real scenario, retrieve admin username from security context
-        String adminUsername = "admin"; // placeholder
+    public ResponseEntity<AdmissionRequestResponseDTO> approveAdmission(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String adminUsername = userDetails.getUsername();
         AdmissionRequestResponseDTO approved = admissionService.approveRequest(id, null, adminUsername);
         return ResponseEntity.ok(approved);
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<AdmissionRequestResponseDTO> rejectAdmission(@PathVariable Long id,
-                                                                       @RequestBody AdmissionRejectDTO rejectDTO) {
-        String adminUsername = "admin"; // placeholder
+    public ResponseEntity<AdmissionRequestResponseDTO> rejectAdmission(
+            @PathVariable Long id,
+            @RequestBody AdmissionRejectDTO rejectDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String adminUsername = userDetails.getUsername();
         AdmissionRequestResponseDTO rejected = admissionService.rejectRequest(id, rejectDTO.getReason(), adminUsername);
         return ResponseEntity.ok(rejected);
     }

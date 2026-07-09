@@ -19,22 +19,38 @@ public class EncryptionService {
     private static final String ENCRYPTION_ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;
-    
+
     private final SecretKey encryptionKey;
     private final String hashSalt;
+    
+    private final SecretKey oldEncryptionKey;
+    private final String oldHashSalt;
 
     public EncryptionService(
             @Value("${app.security.encryption.secret}") String secret,
-            @Value("${app.security.hash.salt}") String salt) {
-        // Ensure secret is 32 bytes for AES-256
+            @Value("${app.security.hash.salt}") String salt,
+            @Value("${app.security.encryption.old-secret:}") String oldSecret,
+            @Value("${app.security.hash.old-salt:}") String oldSalt) {
+        
+        this.encryptionKey = generateKey(secret);
+        this.hashSalt = salt;
+        
+        if (oldSecret != null && !oldSecret.isEmpty()) {
+            this.oldEncryptionKey = generateKey(oldSecret);
+        } else {
+            this.oldEncryptionKey = null;
+        }
+        this.oldHashSalt = oldSalt;
+    }
+
+    private SecretKey generateKey(String secret) {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length != 32) {
             byte[] padded = new byte[32];
             System.arraycopy(keyBytes, 0, padded, 0, Math.min(keyBytes.length, 32));
             keyBytes = padded;
         }
-        this.encryptionKey = new SecretKeySpec(keyBytes, "AES");
-        this.hashSalt = salt;
+        return new SecretKeySpec(keyBytes, "AES");
     }
 
     public String encrypt(String plainText) {
@@ -66,19 +82,31 @@ public class EncryptionService {
             return encryptedText;
         }
         try {
-            byte[] cipherMessage = Base64.getDecoder().decode(encryptedText);
-
-            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, cipherMessage, 0, GCM_IV_LENGTH);
-            cipher.init(Cipher.DECRYPT_MODE, encryptionKey, parameterSpec);
-
-            byte[] plainText = cipher.doFinal(cipherMessage, GCM_IV_LENGTH, cipherMessage.length - GCM_IV_LENGTH);
-
-            return new String(plainText, StandardCharsets.UTF_8);
+            return doDecrypt(encryptedText, encryptionKey);
         } catch (Exception e) {
-            // For safety during migration, if we fail to decrypt, just return null
+            // Primary key failed (likely AEADBadTagException or BadPaddingException)
+            // Attempt fallback to old key if available
+            if (oldEncryptionKey != null) {
+                try {
+                    return doDecrypt(encryptedText, oldEncryptionKey);
+                } catch (Exception fallbackEx) {
+                    return null; // Both failed
+                }
+            }
             return null;
         }
+    }
+
+    private String doDecrypt(String encryptedText, SecretKey key) throws Exception {
+        byte[] cipherMessage = Base64.getDecoder().decode(encryptedText);
+
+        Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+        GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, cipherMessage, 0, GCM_IV_LENGTH);
+        cipher.init(Cipher.DECRYPT_MODE, key, parameterSpec);
+
+        byte[] plainText = cipher.doFinal(cipherMessage, GCM_IV_LENGTH, cipherMessage.length - GCM_IV_LENGTH);
+
+        return new String(plainText, StandardCharsets.UTF_8);
     }
 
     public String generateHash(String plainText) {

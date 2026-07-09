@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,7 +76,7 @@ export default function StudentMapping() {
       const { data } = await api.get('/hostels');
       setHostels(data);
     } catch (error) {
-      console.error(error);
+      logger.error('Operation failed', error);
     }
   };
 
@@ -84,7 +85,7 @@ export default function StudentMapping() {
       const { data } = await api.get(`/rooms/hostel/${hostelId}`);
       setRooms(data);
     } catch (error) {
-      console.error(error);
+      logger.error('Operation failed', error);
     }
   };
 
@@ -94,7 +95,7 @@ export default function StudentMapping() {
       // When populating beds for a transfer, we want VACANT beds, PLUS the student's CURRENT bed
       setBeds(data.filter((b: Bed) => b.status === 'VACANT' || transferringId && selectedBedId === b.id.toString()));
     } catch (error) {
-      console.error(error);
+      logger.error('Operation failed', error);
     }
   };
 

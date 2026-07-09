@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -61,7 +62,7 @@ export default function GiveComplaints() {
       const { data } = await api.get('/hostels');
       setHostels(data);
     } catch (e) {
-      console.error(e);
+      logger.error('Operation failed', e);
     }
   };
 
@@ -72,7 +73,7 @@ export default function GiveComplaints() {
       setRooms(data);
       setSelectedRoomId('');
     } catch (e) {
-      console.error(e);
+      logger.error('Operation failed', e);
     } finally {
       setLoadingRooms(false);
     }

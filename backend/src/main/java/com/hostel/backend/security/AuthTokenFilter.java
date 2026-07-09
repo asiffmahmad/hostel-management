@@ -2,6 +2,7 @@ package com.hostel.backend.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -47,9 +48,26 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Reads the JWT from the HttpOnly auth_token cookie (preferred — XSS-safe).
+     * Falls back to the Authorization: Bearer header for API clients (Postman, mobile apps).
+     */
     private String parseJwt(HttpServletRequest request) {
-        String headerAuth = request.getHeader("Authorization");
+        // 1. Try HttpOnly cookie first
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("auth_token".equals(cookie.getName())) {
+                    String value = cookie.getValue();
+                    if (StringUtils.hasText(value)) {
+                        return value;
+                    }
+                }
+            }
+        }
 
+        // 2. Fall back to Authorization header (API clients)
+        String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }

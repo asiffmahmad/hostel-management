@@ -9,8 +9,12 @@ import com.hostel.backend.enums.Role;
 import com.hostel.backend.repository.UserRepository;
 import com.hostel.backend.security.CustomUserDetails;
 import com.hostel.backend.security.JwtUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,8 +37,30 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
 
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
+    @Value("${jwt.expiration:86400000}")
+    private long jwtExpirationMs;
+
+    // ── Helper: build the auth cookie ────────────────────────────────────────
+    private ResponseCookie buildAuthCookie(String value, long maxAgeMs) {
+        return ResponseCookie.from("auth_token", value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(Duration.ofMillis(maxAgeMs))
+                .build();
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(
+            @Valid @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -41,16 +68,29 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
 
+        // Set JWT as HttpOnly cookie — not readable by JavaScript
+        ResponseCookie cookie = buildAuthCookie(jwt, jwtExpirationMs);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
+        // Return user info — token is intentionally omitted from body (it is in the cookie)
+        return ResponseEntity.ok(new JwtResponse(null,
                 userDetails.getId(),
                 userDetails.getUsername(),
-                "", // Email not in CustomUserDetails currently
+                "",
                 roles));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // Expire the auth cookie immediately
+        ResponseCookie expiredCookie = buildAuthCookie("", 0);
+        response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+        return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
     }
 
     @GetMapping("/me")

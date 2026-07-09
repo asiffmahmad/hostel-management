@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hostel.backend.repository.StudentRepository;
 import com.hostel.backend.repository.PaymentRepository;
@@ -99,6 +100,7 @@ public class PublicController {
         return ResponseEntity.ok(new MessageResponse("Student registered and assigned successfully"));
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/students/lookup")
     public ResponseEntity<?> lookupStudentByPhone(@RequestParam String phone) {
         String phoneHash = com.hostel.backend.security.EncryptionContext.hash(phone);
@@ -136,6 +138,7 @@ public class PublicController {
         return ResponseEntity.ok(response);
     }
 
+    @Transactional
     @PostMapping("/payments/confirm")
     public ResponseEntity<MessageResponse> confirmPayment(@Valid @RequestBody PublicPaymentConfirmRequest request) {
         Student student = studentRepository.findById(request.getStudentId())

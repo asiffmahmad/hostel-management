@@ -26,5 +26,12 @@ __pycache__/
 # Build/Misc
 dist/
 build/
-.env
 scripts/
+
+# Secrets — never commit any .env variant (but allow .env.example)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example

@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,7 +103,7 @@ export default function PaymentCheck() {
     try {
       const { data } = await api.get('/hostels');
       setHostels(data);
-    } catch (e) { console.error(e); }
+    } catch (e) { logger.error('Operation failed', e); }
   };
 
   const fetchRooms = async (hostelId: string) => {
@@ -137,7 +138,7 @@ export default function PaymentCheck() {
     try {
       const { data } = await api.get(`/payments/student/${studentId}`);
       setStudentPayments(data);
-    } catch (e) { console.error(e); }
+    } catch (e) { logger.error('Operation failed', e); }
   };
 
   // ── Import ──────────────────────────────────────────────────────────────

@@ -114,4 +114,30 @@ public class SecurityMigrationService {
         log.info("Successfully encrypted PII for {} users.", userCount);
         log.info("Phase 2 Security Migration Completed Successfully.");
     }
+
+    @Transactional
+    public void rotateKeys() {
+        log.info("Starting Key Rotation Migration: Re-encrypting existing PII data with new keys...");
+
+        List<Student> students = studentRepository.findAll();
+        int studentCount = 0;
+        for (Student student : students) {
+            // Re-encrypt fields using the new primary key
+            student.secureData();
+            studentRepository.save(student);
+            studentCount++;
+        }
+        log.info("Successfully re-encrypted PII for {} students.", studentCount);
+
+        List<User> users = userRepository.findAll();
+        int userCount = 0;
+        for (User user : users) {
+            // Re-encrypt fields using the new primary key
+            user.secureData();
+            userRepository.save(user);
+            userCount++;
+        }
+        log.info("Successfully re-encrypted PII for {} users.", userCount);
+        log.info("Key Rotation Migration Completed Successfully.");
+    }
 }

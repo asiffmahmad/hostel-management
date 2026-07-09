@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ export function ManualMappingSection() {
         const { data } = await api.get('/hostels');
         setHostels(data);
       } catch (e) {
-        console.error(e);
+        logger.error('Operation failed', e);
       }
     };
     fetchHostels();

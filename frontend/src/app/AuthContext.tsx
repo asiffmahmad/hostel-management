@@ -9,69 +9,74 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/+$/, '') + '/api';
 
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // true until /auth/me resolves
+
+  // On mount, verify session via HttpOnly cookie — no localStorage token needed
   useEffect(() => {
-    const verifyToken = async () => {
-      if (token) {
-        try {
-          const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (res.status === 401 || res.status === 403) {
-            throw new Error('Token invalid or expired');
-          }
-          
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.id) {
-              setUser((prev) => prev ? { ...prev, ...data } : data);
-            }
-          }
-        } catch (error: any) {
-          // Only logout if we explicitly threw above (meaning 401/403)
-          // or if you want to be safe, you can check error message.
-          if (error.message === 'Token invalid or expired') {
-            logout();
-          }
+    const verifySession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: 'include', // send the HttpOnly auth_token cookie
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.id) setUser(data as User);
+        } else {
+          // 401/403 — cookie missing or expired, treat as logged out
+          setUser(null);
         }
+      } catch {
+        // Network error — keep user null (unauthenticated)
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
-    verifyToken();
-  }, [token]);
 
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setToken(newToken);
+    verifySession();
+  }, []);
+
+  /**
+   * Called after a successful login response.
+   * The JWT cookie was already set by the server — we just store the user info in state.
+   */
+  const login = (newUser: User) => {
     setUser(newUser);
+    // NOTE: Token is in an HttpOnly cookie set by the server — NOT stored in localStorage
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
+  /**
+   * Calls the backend logout endpoint which expires the HttpOnly cookie,
+   * then clears local user state.
+   */
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Even if the request fails, clear local state so the UI reflects logged-out status
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

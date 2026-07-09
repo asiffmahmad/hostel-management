@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,7 @@ const Reports = () => {
       document.body.removeChild(link);
       toast({ title: 'Export completed successfully' });
     } catch (error) {
-      console.error(error);
+      logger.error('Operation failed', error);
       toast({ title: 'Failed to export report', variant: 'destructive' });
     }
   };
