@@ -98,6 +98,7 @@ public class SecurityConfig {
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .map(origin -> origin.replaceAll("^[\"']|[\"']$", "")) // Remove leading/trailing quotes
+                .map(origin -> origin.replaceAll("/+$", "")) // Remove trailing slashes
                 .collect(java.util.stream.Collectors.toList());
         log.info("Parsed CORS Allowed Origins: {}", origins);
         configuration.setAllowedOrigins(origins);
