@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/table';
 import { Search, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+
+const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 
 interface ExternalPayment {
   id: number;
@@ -40,13 +42,12 @@ const ExternalPaymentValidation = () => {
   const [validatingId, setValidatingId] = useState<number | null>(null);
 
   // Filters
-  const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [monthFilter, setMonthFilter] = useState(MONTHS[new Date().getMonth()]);
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -60,11 +61,11 @@ const ExternalPaymentValidation = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [monthFilter, yearFilter]);
 
   useEffect(() => {
     fetchPayments();
-  }, [monthFilter, yearFilter]);
+  }, [fetchPayments]);
 
   const handleValidateAll = async () => {
     setValidatingAll(true);
