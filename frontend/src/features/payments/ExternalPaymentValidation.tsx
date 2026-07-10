@@ -40,14 +40,19 @@ const ExternalPaymentValidation = () => {
   const [validatingId, setValidatingId] = useState<number | null>(null);
 
   // Filters
+  const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('PENDING');
-  const [dateFilter, setDateFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [monthFilter, setMonthFilter] = useState(MONTHS[new Date().getMonth()]);
+  const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
 
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/external-payments');
+      const params = new URLSearchParams();
+      if (monthFilter && monthFilter !== 'ALL') params.append('month', monthFilter);
+      if (yearFilter && yearFilter !== 'ALL') params.append('year', yearFilter);
+      const response = await api.get(`/external-payments?${params.toString()}`);
       setPayments(response.data);
     } catch (error) {
       console.error('Failed to fetch external payments:', error);
@@ -59,7 +64,7 @@ const ExternalPaymentValidation = () => {
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [monthFilter, yearFilter]);
 
   const handleValidateAll = async () => {
     setValidatingAll(true);
@@ -123,10 +128,7 @@ const ExternalPaymentValidation = () => {
       
     const matchesStatus = statusFilter === 'ALL' || p.validationStatus === statusFilter;
     
-    // Support filtering by date
-    const matchesDate = !dateFilter || p.transactionDate === dateFilter;
-    
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesStatus;
   });
 
   const pendingCount = payments.filter(p => p.validationStatus === 'PENDING').length;
@@ -167,15 +169,27 @@ const ExternalPaymentValidation = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Input
-                type="date"
-                className="w-full sm:w-40"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                title="Filter by Transaction Date"
-              />
               <select 
-                className="w-full sm:w-36 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full sm:w-36 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+              >
+                <option value="ALL">All Months</option>
+                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select 
+                className="w-full sm:w-32 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+              >
+                <option value="ALL">All Years</option>
+                {[...Array(5)].map((_, i) => {
+                  const y = String(new Date().getFullYear() - 2 + i);
+                  return <option key={y} value={y}>{y}</option>;
+                })}
+              </select>
+              <select 
+                className="w-full sm:w-36 flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -184,11 +198,6 @@ const ExternalPaymentValidation = () => {
                 <option value="VALIDATED">Validated</option>
                 <option value="FAILED">Failed</option>
               </select>
-              {dateFilter && (
-                <Button variant="ghost" size="sm" onClick={() => setDateFilter('')} className="text-xs">
-                  Clear Date
-                </Button>
-              )}
             </div>
           </div>
         </CardHeader>

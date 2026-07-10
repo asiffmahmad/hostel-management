@@ -15,5 +15,11 @@ public interface ExternalPaymentRepository extends JpaRepository<ExternalPayment
     
     List<ExternalPayment> findByValidationStatusAndIsDeletedFalse(String validationStatus);
     
+    List<ExternalPayment> findByIsDeletedFalse();
+    
+    List<ExternalPayment> findByMonthIgnoreCaseAndYearAndIsDeletedFalse(String month, String year);
+    
+    List<ExternalPayment> findByMonthIgnoreCaseAndYearAndValidationStatusAndIsDeletedFalse(String month, String year, String validationStatus);
+    
     boolean existsByUtrNumberAndIsDeletedFalse(String utrNumber);
 }

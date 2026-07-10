@@ -19,8 +19,10 @@ public class ExternalPaymentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<List<ExternalPaymentDTO>> getAllExternalPayments() {
-        return ResponseEntity.ok(externalPaymentService.getAllExternalPayments());
+    public ResponseEntity<List<ExternalPaymentDTO>> getAllExternalPayments(
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) String year) {
+        return ResponseEntity.ok(externalPaymentService.getAllExternalPayments(month, year));
     }
 
     @GetMapping("/pending")

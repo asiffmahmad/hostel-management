@@ -39,9 +39,17 @@ public class ExternalPaymentService {
     }
     
     @Transactional(readOnly = true)
-    public List<ExternalPaymentDTO> getAllExternalPayments() {
-        return externalPaymentRepository.findAll().stream()
-                .filter(ep -> !ep.getIsDeleted())
+    public List<ExternalPaymentDTO> getAllExternalPayments(String month, String year) {
+        List<ExternalPayment> payments;
+        boolean hasMonth = month != null && !month.isBlank() && !month.equalsIgnoreCase("ALL");
+        boolean hasYear = year != null && !year.isBlank() && !year.equalsIgnoreCase("ALL");
+
+        if (hasMonth && hasYear) {
+            payments = externalPaymentRepository.findByMonthIgnoreCaseAndYearAndIsDeletedFalse(month, year);
+        } else {
+            payments = externalPaymentRepository.findByIsDeletedFalse();
+        }
+        return payments.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
